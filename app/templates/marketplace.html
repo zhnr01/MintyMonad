@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% from 'bootstrap4/form.html' import render_form %}
+{% from "_macros.html" import nft_row %}
+
+{% block container %}
+<div class="container text-center">
+    <div class="container text-center">
+        {{ nft_row(3) }}
+        {{ nft_row(3) }}
+    </div>
+</div>
+{% endblock %}
