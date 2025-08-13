@@ -8,54 +8,69 @@
 </div>
 {% endmacro %}
 
-{% macro marketplace_nft_row(nfts) %}
+{% macro marketplace_nft_row(nfts, current_wallet_address) %}
 <div class="row">
     {% for nft in nfts %}
     <div class="col">
-        {{ marketplace_nft_card(nft) }}
+        {{ marketplace_nft_card(nft, current_wallet_address) }}
     </div>
     {% endfor %}
 </div>
 {% endmacro %}
 
 {% macro nft_card(nft) %}
-<div class="card" style="width: 18rem;">
-    {% if nft.image_url is string and nft.image_url.startswith('<svg') %} <div class="card-img-top" alt="NFT Image">
-        {{ nft.image_url | safe }}
-</div>
-{% else %}
-<img src="{{ nft.image_url }}" class="card-img-top" alt="NFT Image">
-{% endif %}
-<div class="card-body">
-    <h5 class="card-title">{{ nft.name }}</h5>
-    <p class="card-text">
-        <strong>Symbol:</strong> {{ nft.symbol }}<br>
-        <strong id="contract_address">Contract:</strong> {{ nft.contract_address }}
-        <strong id="token_id">Token ID:</strong> {{ nft.token_id }}
-    </p>
-</div>
-<a href="/nfts/list?contract_address={{ nft.contract_address | urlencode }}&token_id={{ nft.token_id | urlencode }}"
-    class="btn btn-primary mt-auto">
-    List NFT
-</a>
+<div class="card d-flex flex-column" style="width: 18rem;">
+    {% if nft.image_url is string and nft.image_url.startswith('<svg') %}
+        <div class="card-img-top" alt="NFT Image">
+            {{ nft.image_url | safe }}
+        </div>
+    {% else %}
+        <img src="{{ nft.image_url }}" class="card-img-top" alt="NFT Image">
+    {% endif %}
+    <div class="card-body flex-grow-1 d-flex flex-column">
+        <h5 class="card-title">{{ nft.name }}</h5>
+        <p class="card-text mb-3">
+            <strong>Symbol:</strong> {{ nft.symbol }}<br>
+            <strong id="contract_address">Contract:</strong> {{ nft.contract_address }}<br>
+            <strong id="token_id">Token ID:</strong> {{ nft.token_id }}
+        </p>
+        {% if nft.listed %}
+            <small class="text-success mb-2">This NFT is listed on the marketplace.</small>
+            <button class="btn btn-warning unlistBtn mt-auto" data-contract="{{ nft.contract_address }}" data-tokenid="{{ nft.token_id }}">
+                Unlist NFT
+            </button>
+        {% else %}
+            <a href="/nfts/list?contract_address={{ nft.contract_address | urlencode }}&token_id={{ nft.token_id | urlencode }}"
+               class="btn btn-primary mt-auto">
+                List NFT
+            </a>
+        {% endif %}
+    </div>
 </div>
 {% endmacro %}
 
-{% macro marketplace_nft_card(nft) %}
+
+{% macro marketplace_nft_card(nft, current_wallet_address=None) %}
 <div class="card" style="width: 18rem;">
-    {% if nft.image_url is string and nft.image_url.startswith('<svg') %} <div class="card-img-top" alt="NFT Image">
-        {{ nft.image_url | safe }}
-</div>
-{% else %}
-<img src="{{ nft.image_url }}" class="card-img-top" alt="NFT Image">
-{% endif %}
-<div class="card-body">
-    <p class="card-text">
-        <strong>Symbol:</strong> {{ nft.symbol }}<br>
-        <strong id="contract_address">Contract:</strong> {{ nft.contract_address }}
-        <strong id="token_id">Token ID:</strong> {{ nft.token_id }}
-        <strong>Price: </strong> {{nft.price}} $MON
-    </p>
-</div>
+    {% if nft.image_url is string and nft.image_url.startswith('<svg') %}
+        <div class="card-img-top" alt="NFT Image">
+            {{ nft.image_url | safe }}
+        </div>
+    {% else %}
+        <img src="{{ nft.image_url }}" class="card-img-top" alt="NFT Image">
+    {% endif %}
+    <div class="card-body">
+        <p class="card-text">
+            <strong>Symbol:</strong> {{ nft.symbol }}<br>
+            <strong id="contract_address">Contract:</strong> {{ nft.contract_address }}<br>
+            <strong id="contract_owner">Owner:</strong> {{ nft.owner }}<br>
+            <strong id="token_id">Token ID:</strong> {{ nft.token_id }}<br>
+            <strong>Price: </strong> {{ nft.price }} $MON
+        </p>
+        
+        {% if current_wallet_address and nft.owner|lower == current_wallet_address|lower %}
+            <button class="btn btn-warning unlistBtn" data-contract="{{ nft.contract_address }}" data-tokenid="{{ nft.token_id }}">Unlist</button>
+        {% endif %}
+    </div>
 </div>
 {% endmacro %}

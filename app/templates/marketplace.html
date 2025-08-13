@@ -9,7 +9,7 @@
     <h2>ERC-721 NFTs Listing</h2>
     {% set total = nfts | length %}
     {% for i in range(0, total, 3) %}
-        {{ marketplace_nft_row(nfts[i:i+3]) }}
+        {{ marketplace_nft_row(nfts[i:i+3], current_wallet_address) }}
     {% endfor %}
 </div>
-{% endblock %}
+{% endblock %} 
