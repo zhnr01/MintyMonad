@@ -39,6 +39,7 @@
             <button class="btn btn-warning unlistBtn mt-auto" data-contract="{{ nft.contract_address }}" data-tokenid="{{ nft.token_id }}">
                 Unlist NFT
             </button>
+            <button class="btn btn-secondary viewProposalsBtn" data-contract="{{ nft.contract_address }}" data-tokenid="{{ nft.token_id }}">View proposals</button>
         {% else %}
             <a href="/nfts/list?contract_address={{ nft.contract_address | urlencode }}&token_id={{ nft.token_id | urlencode }}"
                class="btn btn-primary mt-auto">
@@ -70,6 +71,7 @@
         
         {% if current_wallet_address and nft.owner|lower == current_wallet_address|lower %}
             <button class="btn btn-warning unlistBtn" data-contract="{{ nft.contract_address }}" data-tokenid="{{ nft.token_id }}">Unlist</button>
+            <button class="btn btn-secondary viewProposalsBtn" data-contract="{{ nft.contract_address }}" data-tokenid="{{ nft.token_id }}">View proposals</button>
         {% else %}
             <button class="btn btn-primary makeOfferBtn" data-contract="{{ nft.contract_address }}" data-tokenid="{{ nft.token_id }}">Make an offer</button>
         {% endif %}
