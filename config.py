@@ -1,15 +1,19 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 base_dir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'hard to guess string'
-    SQLALCHEMY_COMMIT_ON_TEARDOWN = True
+    SECRET_KEY = os.environ.get('SECRET_KEY')
     FLASKY_MAIL_SUBJECT_PREFIX = '[Flasky]'
-    FLASKY_MAIL_SENDER = 'email_address'
-    FLASKY_ADMIN = os.environ.get('FLASKY_ADMIN') or 'admin_email_address'
     BOOTSTRAP_BOOTSWATCH_THEME  = 'pulse'
+    ALCHEMY_API_KEY = os.environ.get('ALCHEMY_API_KEY')
+    ALCHEMY_URL = f"https://monad-testnet.g.alchemy.com/nft/v3/{ALCHEMY_API_KEY}/getNFTsForOwner"
+    NFT_MARKETPLACE_CONTRACT_ADDRESS = '0x7dA4Bf6D0EdC392C82D6C8A5aac414810689B9AE'
+    MONAD_RPC_URL = os.environ.get('MONAD_RPC')
 
     @staticmethod
     def init_app(app):
@@ -17,17 +21,9 @@ class Config:
 
 
 class DevelopmentConfig(Config):
-    MAIL_DEBUG = True
     DEBUG = True
-    MAIL_SERVER = 'smtp.googlemail.com'
-    MAIL_PORT = 587
-    MAIL_USE_TLS = True
-    MAIL_USERNAME = os.environ.get('MAIL_USERNAME') or 'testusername'
-    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD') or 'abcd efgh ijkl mnop'
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
         'sqlite:///' + os.path.join(base_dir, 'data-dev.sqlite')
-    FLASKY_COMMENTS_PER_PAGE = 5
-    FLASKY_POSTS_PER_PAGE = 5
 
 
 class TestingConfig(Config):
