@@ -20,46 +20,42 @@
 
 {% macro nft_card(nft) %}
 <div class="card" style="width: 18rem;">
-    {% if nft.image_url is string and nft.image_url.startswith('<svg') %}
-        <div class="card-img-top" alt="NFT Image">
-            {{ nft.image_url | safe }}
-        </div>
-    {% else %}
-        <img src="{{ nft.image_url }}" class="card-img-top" alt="NFT Image">
-    {% endif %}
-    <div class="card-body">
-        <h5 class="card-title">{{ nft.name }}</h5>
-        <p class="card-text">
-            <strong>Symbol:</strong> {{ nft.symbol }}<br>
-            <strong id="contract_address">Contract:</strong> {{ nft.contract_address }}
-            <strong id="token_id">Token ID:</strong> {{ nft.token_id }}
-        <a href="/nfts/list?contract_address={{nft.contract_address|urlencode}}&token_id={{nft.token_id|urlencode}}" 
-           class="btn btn-danger">
-            List
-        </a>
-        </p>
-    </div>
+    {% if nft.image_url is string and nft.image_url.startswith('<svg') %} <div class="card-img-top" alt="NFT Image">
+        {{ nft.image_url | safe }}
+</div>
+{% else %}
+<img src="{{ nft.image_url }}" class="card-img-top" alt="NFT Image">
+{% endif %}
+<div class="card-body">
+    <h5 class="card-title">{{ nft.name }}</h5>
+    <p class="card-text">
+        <strong>Symbol:</strong> {{ nft.symbol }}<br>
+        <strong id="contract_address">Contract:</strong> {{ nft.contract_address }}
+        <strong id="token_id">Token ID:</strong> {{ nft.token_id }}
+    </p>
+</div>
+<a href="/nfts/list?contract_address={{ nft.contract_address | urlencode }}&token_id={{ nft.token_id | urlencode }}"
+    class="btn btn-primary mt-auto">
+    List NFT
+</a>
 </div>
 {% endmacro %}
 
 {% macro marketplace_nft_card(nft) %}
 <div class="card" style="width: 18rem;">
-    {% if nft.image_url is string and nft.image_url.startswith('<svg') %}
-        <div class="card-img-top" alt="NFT Image">
-            {{ nft.image_url | safe }}
-        </div>
-    {% else %}
-        <img src="{{ nft.image_url }}" class="card-img-top" alt="NFT Image">
-    {% endif %}
-    <div class="card-body">
-        <p class="card-text">
-            <strong>Symbol:</strong> {{ nft.symbol }}<br>
-            <strong id="contract_address">Contract:</strong> {{ nft.contract_address }}
-            <strong id="token_id">Token ID:</strong> {{ nft.token_id }}
-            <strong>Price: </strong> {{nft.price}} $MON
-        </p>
-    </div>
+    {% if nft.image_url is string and nft.image_url.startswith('<svg') %} <div class="card-img-top" alt="NFT Image">
+        {{ nft.image_url | safe }}
+</div>
+{% else %}
+<img src="{{ nft.image_url }}" class="card-img-top" alt="NFT Image">
+{% endif %}
+<div class="card-body">
+    <p class="card-text">
+        <strong>Symbol:</strong> {{ nft.symbol }}<br>
+        <strong id="contract_address">Contract:</strong> {{ nft.contract_address }}
+        <strong id="token_id">Token ID:</strong> {{ nft.token_id }}
+        <strong>Price: </strong> {{nft.price}} $MON
+    </p>
+</div>
 </div>
 {% endmacro %}
-
-
