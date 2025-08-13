@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from 'bootstrap4/form.html' import render_form %}
+
+
+{% block container %}
+<div class="card">
+  <div class="card-header bg-primary text-white">
+    <h5 class="card-title mb-0">List Your NFT</h5>
+  </div>
+  <div class="card-body">
+    <form>
+      <div class="mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-muted">Contract Address:</span>
+          <span class="badge bg-secondary text-truncate" style="max-width: 200px;" id="address">{{contract_address}}</span>
+        </div>
+        
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <span class="text-muted">Token ID:</span>
+          <span class="badge bg-info" id="id">{{token_id}}</span>
+        </div>
+        
+        <div class="input-group mb-3">
+          <span class="input-group-text">$MON</span>
+          <input type="number" 
+                 class="form-control" 
+                 id="nftPrice" 
+                 placeholder="0.00" 
+                 step="0.01" 
+                 min="0.01"
+                 required>
+        </div>
+      </div>
+      
+      <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+        <button type="button" class="btn btn-outline-secondary me-md-2">
+          <i class="bi bi-x-circle"></i> Cancel
+        </button>
+        <button type="submit" id="approve" class="btn btn-primary">
+          <i class="bi bi-check-circle"></i> Approve Listing
+        </button>
+      </div>
+    </form>
+    <button type="submit" id="listButton" class="btn btn-primary" style="display: none;">
+          <i class="bi bi-check-circle"></i> List
+    </button>
+  </div>
+  <div class="card-footer text-muted small">
+    You'll need to approve this NFT for sale first
+  </div>
+</div>
+
+{% endblock %}
