@@ -3,13 +3,18 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {{ bootstrap.load_css() }}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-
-    {% block title %}
-    <title>Minty Monad</title>
+    {% block head %}
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        {{ bootstrap.load_css() }}
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+        <script type='module' src="https://cdn.jsdelivr.net/npm/ethers@6.8.1/dist/ethers.min.js"></script>
+        <script type="module" src="{{ url_for('static', filename='js/wallet_connect.js')}}"></script>
+        <script type="module" src="{{ url_for('static', filename='js/approve_nft.js')}}"></script> 
+        <script type="module" src="{{ url_for('static', filename='js/list_nft.js')}}"></script>        
+        {% block title %}
+        <title>Minty Monad</title>
+        {% endblock %}
     {% endblock %}
 
 </head>
@@ -27,15 +32,27 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item"><a class="nav-link active" href="{{url_for('main.index')}}">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{url_for('nfts.marketplace')}}">Explore</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{url_for('nfts.my_nfts')}}">My NFTs</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{url_for('nfts.mint')}}">Mint NFT</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{url_for('nfts.marketplace')}}">Marketplace</a>
-                    </li>
-                    <li class="nav-item"><a class="nav-link" href="{{url_for('main.activity')}}">Activity</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{url_for('nfts.marketplace_data')}}">Marketplace</a>
+                    {% if current_user %}
+                        <li class="nav-item"><a class="nav-link" href="{{url_for('main.activity')}}">Activity</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{url_for('nfts.my_nfts')}}">My NFTs</a></li>
+                    {% endif %}
                 </ul>
-
-                <button class="btn btn-outline-light" id="walletConnectBtn">Connect Wallet</button>
+                <button class="btn btn-success" id="walletConnectBtn">Connect Wallet</button>
+                <button class="btn btn-danger" id="walletDisconnectBtn"></button>
+                {% if current_user and current_user.wallet_address %}
+                    <script>
+                        document.getElementById('walletConnectBtn').style.display = 'none';
+                        document.getElementById('walletDisconnectBtn').textContent = "Disconnect: {{ current_user.wallet_address[:6] }}...{{ current_user.wallet_address[-4:] }}";
+                        document.getElementById('walletDisconnectBtn').style.display = 'block';
+                    </script>
+                {% else %}
+                    <script>
+                        document.getElementById('walletDisconnectBtn').style.display = 'none';
+                        document.getElementById('walletDisconnectBtn').textContent = '';
+                        document.getElementById('walletConnectBtn').style.display = 'block';
+                    </script>
+                {% endif %}
             </div>
         </div>
     </nav>
@@ -48,7 +65,7 @@
 
     {% block scripts %}
     <!-- Optional JavaScript -->
-    {{ bootstrap.load_js() }}
+    
     {% endblock %}
 </body>
 
