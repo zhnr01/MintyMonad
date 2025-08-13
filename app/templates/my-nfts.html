@@ -1,3 +1,12 @@
 {% extends "base.html" %}
-{% from 'bootstrap4/form.html' import render_form %}
+{% from "_macros.html" import nft_row %}
 
+{% block container %}
+<div class="container text-center">
+    <h2>ERC-721 NFTs you Own</h2>
+    {% set total = nfts | length %}
+    {% for i in range(0, total, 3) %}
+        {{ nft_row(nfts[i:i+3]) }}
+    {% endfor %}
+</div>
+{% endblock %}
