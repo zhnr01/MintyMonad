@@ -1,3 +1,6 @@
 .row {
     margin-bottom: 2em;
 }
+.card-img-top {
+    height: 12em;
+}
