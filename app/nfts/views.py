@@ -18,32 +18,59 @@ def my_nfts():
     if not wallet_address:
         return jsonify({"error": "Wallet address is required"}), 400
 
+    # Fetch owned NFTs from Alchemy
     params = {
         "owner": wallet_address,
         "withMetadata": "true",
         "pageSize": 100
     }
     headers = {"accept": "application/json"}
-    
+
     try:
         response = requests.get(current_app.config.get('ALCHEMY_URL'), headers=headers, params=params)
         response.raise_for_status()
         data = response.json()
 
-        nfts = []
+        owned_nfts = []
         for nft in data.get("ownedNfts", []):
             if nft["tokenType"] != "ERC721":
                 continue
-            nfts.append({
+            owned_nfts.append({
                 "name": nft['contract']['name'],
                 "symbol": nft['contract']['symbol'],
-                "contract_address": nft['contract']['address'],
+                "contract_address": nft['contract']['address'].lower(),
                 "image_url": nft.get('image', {}).get('thumbnailUrl') or url_for('static', filename='images/dummy.png'),
                 "token_id": nft['tokenId']
             })
 
-        return render_template('my-nfts.html', nfts=nfts)
+        # Now fetch all listed NFTs from marketplace and build a lookup set
+        rpc_url = current_app.config.get('MONAD_RPC_URL')
+        marketplace_address = Web3.to_checksum_address(
+            current_app.config.get('NFT_MARKETPLACE_CONTRACT_ADDRESS')
+        )
+        with open('/home/byte/Desktop/minty monad/app/static/NFTMarketplace.abi.json') as f:
+            marketplace_abi = json.load(f)
+
+        w3 = Web3(Web3.HTTPProvider(rpc_url))
+        marketplace_contract = w3.eth.contract(address=marketplace_address, abi=marketplace_abi)
+        listed_nfts, listed_token_ids = marketplace_contract.functions.getAllListedNFTs().call()
+
+        # Build a set of (contract_address.lower(), token_id) for quick lookup
+        listed_set = set(
+            (addr.lower(), tid)
+            for addr, tid in zip(listed_nfts, listed_token_ids)
+        )
+
+        # Add 'listed' flag to each owned NFT
+        for nft in owned_nfts:
+            key = (nft['contract_address'].lower(), int(nft['token_id']))
+            nft['listed'] = key in listed_set
+
+        return render_template('my-nfts.html', nfts=owned_nfts)
+
     except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
@@ -70,6 +97,13 @@ def marketplace_data():
                 "inputs": [{"name": "tokenId", "type": "uint256"}],
                 "name": "tokenURI",
                 "outputs": [{"name": "", "type": "string"}],
+                "type": "function"
+            },
+            {
+                "constant": True,
+                "inputs": [{"name": "tokenId", "type": "uint256"}],
+                "name": "ownerOf",
+                "outputs": [{"name": "", "type": "address"}],
                 "type": "function"
             }
         ]
@@ -101,14 +135,20 @@ def marketplace_data():
             except Exception:
                 image_url = url_for('static', filename='images/dummy.png')
 
+            try:
+                owner = nft_contract.functions.ownerOf(token_id).call()
+            except Exception:
+                owner = "Unknown"
+
             results.append({
                 "contract_address": nft_address,
                 "token_id": token_id,
                 "price": w3.from_wei(price_wei, 'ether'),  # in MON
                 "symbol": symbol,
-                "image_url": image_url
+                "image_url": image_url,
+                "owner": owner
             })
-        return render_template('marketplace.html', nfts=results)
+        return render_template('marketplace.html', nfts=results, current_wallet_address=session.get('wallet_address'))
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
