@@ -1,3 +1,76 @@
 {% extends "base.html" %}
-{% from 'bootstrap4/form.html' import render_form %}
 
+
+{% block walletConnectBtn %}
+
+<button class="btn btn-success" id="walletConnectBtn">Connect Wallet</button>
+<button class="btn btn-danger" id="walletDisconnectBtn"></button>
+{% if current_user and current_user.wallet_address %}
+<script>
+    document.getElementById('walletConnectBtn').style.display = 'none';
+    document.getElementById('walletDisconnectBtn').textContent = "Disconnect: {{ current_user.wallet_address[:6] }}...{{ current_user.wallet_address[-4:] }}";
+    document.getElementById('walletDisconnectBtn').style.display = 'block';
+</script>
+{% else %}
+<script>
+    document.getElementById('walletDisconnectBtn').style.display = 'none';
+    document.getElementById('walletDisconnectBtn').textContent = '';
+    document.getElementById('walletConnectBtn').style.display = 'block';
+</script>
+{% endif %}
+{% endblock %}
+{% block container %}
+<div class="container py-5">
+
+    <!-- Hero Section -->
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold">Welcome to Minty Monad</h1>
+        <p class="lead text-muted">A decentralized NFT marketplace built on the Monad blockchain.</p>
+        <div class="d-flex justify-content-center gap-3 mt-4 flex-wrap">
+            <a href="{{ url_for('nfts.marketplace_data') }}" class="btn btn-primary btn-lg">Explore Marketplace</a>
+            {% if current_user %}
+            <a href="{{ url_for('nfts.my_nfts') }}" class="btn btn-outline-primary btn-lg">My NFTs</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- About Section -->
+    <section class="mb-5">
+        <h2 class="mb-3">About Minty Monad</h2>
+        <p class="fs-5 text-secondary">
+            Minty Monad is a cutting-edge decentralized NFT marketplace leveraging the power of the Monad blockchain.
+            Buy, sell, and list your ERC-721 NFTs with ease and security. Our platform ensures transparency,
+            ownership verification, and seamless interaction with smart contracts.
+        </p>
+        <p class="fs-6 text-muted">
+            Currently under active development. Stay tuned for new features and improvements!
+        </p>
+    </section>
+
+    <!-- Features Section -->
+    <section>
+        <h3 class="mb-4">Features</h3>
+        <div class="row text-center">
+            <div class="col-md-4 mb-4">
+                <div class="p-4 border rounded shadow-sm h-100">
+                    <h4>Decentralized & Secure</h4>
+                    <p>All transactions and ownership are secured on the Monad blockchain.</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="p-4 border rounded shadow-sm h-100">
+                    <h4>Easy NFT Management</h4>
+                    <p>List your NFTs for sale and manage your collection effortlessly.</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="p-4 border rounded shadow-sm h-100">
+                    <h4>Live Marketplace</h4>
+                    <p>Explore live listings with images, prices, and detailed info.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+{% endblock %}

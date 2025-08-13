@@ -34,25 +34,11 @@
                     <li class="nav-item"><a class="nav-link active" href="{{url_for('main.index')}}">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{url_for('nfts.marketplace_data')}}">Marketplace</a>
                     {% if current_user %}
-                        <li class="nav-item"><a class="nav-link" href="{{url_for('main.activity')}}">Activity</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{url_for('nfts.my_nfts')}}">My NFTs</a></li>
                     {% endif %}
                 </ul>
-                <button class="btn btn-success" id="walletConnectBtn">Connect Wallet</button>
-                <button class="btn btn-danger" id="walletDisconnectBtn"></button>
-                {% if current_user and current_user.wallet_address %}
-                    <script>
-                        document.getElementById('walletConnectBtn').style.display = 'none';
-                        document.getElementById('walletDisconnectBtn').textContent = "Disconnect: {{ current_user.wallet_address[:6] }}...{{ current_user.wallet_address[-4:] }}";
-                        document.getElementById('walletDisconnectBtn').style.display = 'block';
-                    </script>
-                {% else %}
-                    <script>
-                        document.getElementById('walletDisconnectBtn').style.display = 'none';
-                        document.getElementById('walletDisconnectBtn').textContent = '';
-                        document.getElementById('walletConnectBtn').style.display = 'block';
-                    </script>
-                {% endif %}
+                {% block walletConnectBtn %}
+                {% endblock %}
             </div>
         </div>
     </nav>
