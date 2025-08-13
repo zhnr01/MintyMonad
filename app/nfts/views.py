@@ -18,7 +18,6 @@ def my_nfts():
     if not wallet_address:
         return jsonify({"error": "Wallet address is required"}), 400
 
-    # Fetch owned NFTs from Alchemy
     params = {
         "owner": wallet_address,
         "withMetadata": "true",
@@ -72,7 +71,6 @@ def my_nfts():
         return jsonify({"error": str(e)}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @nfts.route('/marketplace-data', methods=['GET'])
 def marketplace_data():
