@@ -71,7 +71,7 @@
         {% if current_wallet_address and nft.owner|lower == current_wallet_address|lower %}
             <button class="btn btn-warning unlistBtn" data-contract="{{ nft.contract_address }}" data-tokenid="{{ nft.token_id }}">Unlist</button>
         {% else %}
-            <button class="btn btn-warning buyBtn" data-contract="{{ nft.contract_address }}" data-tokenid="{{ nft.token_id }}">Buy</button>
+            <button class="btn btn-primary makeOfferBtn" data-contract="{{ nft.contract_address }}" data-tokenid="{{ nft.token_id }}">Make an offer</button>
         {% endif %}
     </div>
 </div>
