@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from 'bootstrap4/form.html' import render_form %}
+{% from "_macros.html" import proposals_row%}
+
+{% block container %}
+<div class="container text-center">
+    {% set total = proposals | length %}
+    {% if total %}
+    <h2>Proposals</h2>
+        {% for i in range(0, total, 3) %}
+            {{ proposals_row(proposals[i:i+3], current_wallet_address, nft_owner_address, contract_address, token_id) }}
+        {% endfor %}
+    {% else %}
+        <h2>No proposals</h2>
+    {% endif %}
+</div>
+{% endblock %}
