@@ -85,3 +85,6 @@ python manage.py
 * **Accept Proposal**: As the seller, accept a proposal to transfer the NFT and receive funds. Other proposers are refunded automatically.
 * **Cancel Proposal**: Cancel your proposal to get your funds back.
 ---
+
+## Notes
+* This project is **not production ready** — use only for testing or development.
