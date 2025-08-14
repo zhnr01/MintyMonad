@@ -82,7 +82,7 @@ python manage.py
 ![Main Page](assets/main.png)
 * **List an NFT**: Approve the marketplace contract, and set a price.
 ![List an NFT](assets/myNftsPage.png)
-[List an NFT](assets/Approve_List.png)
+![Approve page](assets/Approve_List.png)
 * **Make a Proposal**: Submit an offer for an NFT. Your MON is held in the contract.
 ![Make a Proposal](assets/makeAnoffer.png)
 * **Accept Proposal**: As the seller, accept a proposal to transfer the NFT and receive funds. 
