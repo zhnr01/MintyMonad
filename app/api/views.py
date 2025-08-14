@@ -1,7 +1,7 @@
 import json
 import os
 from urllib.parse import unquote
-from flask import jsonify, render_template, request, session, url_for
+from flask import jsonify, render_template, request, session, url_for, current_app
 
 from app.model import User
 from . import api
@@ -51,3 +51,8 @@ def get_marketplace_abi():
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+
+@api.route('/marketplace_contract_address')
+def get_marketplace_contract_address():
+    return jsonify({'contract_address':current_app.config.get('NFT_MARKETPLACE_CONTRACT_ADDRESS')})
