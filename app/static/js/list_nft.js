@@ -30,8 +30,10 @@ async function listNFTOnMarketplace() {
         const response = await fetch('/api/marketplace_abi');
         const marketplaceABI = await response.json();
 
-        const marketplaceAddress = "0x7dA4Bf6D0EdC392C82D6C8A5aac414810689B9AE";
-        const marketplaceContract = new ethers.Contract(marketplaceAddress, marketplaceABI, signer);
+        const contract_response = await fetch('/api/marketplace_contract_address');
+        const marketplace_contract_dict = await contract_response.json()
+        const marketplace_contract = marketplace_contract_dict['contract_address']
+        const marketplaceContract = new ethers.Contract(marketplace_contract, marketplaceABI, signer);
 
         const priceWei = ethers.parseEther(price);
 
@@ -78,9 +80,10 @@ async function unlistNFTOnMarketplace(event) {
 
         const response = await fetch('/api/marketplace_abi');
         const marketplaceABI = await response.json();
-
-        const marketplaceAddress = "0x7dA4Bf6D0EdC392C82D6C8A5aac414810689B9AE";
-        const marketplaceContract = new ethers.Contract(marketplaceAddress, marketplaceABI, signer);
+        const contract_response = await fetch('/api/marketplace_contract_address');
+        const marketplace_contract_dict = await contract_response.json()
+        const marketplace_contract = marketplace_contract_dict['contract_address']
+        const marketplaceContract = new ethers.Contract(marketplace_contract, marketplaceABI, signer);
 
         const tx = await marketplaceContract.unlistNFT(contractAddress, tokenId);
         await tx.wait();
