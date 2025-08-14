@@ -78,13 +78,21 @@ python manage.py
 ---
 
 ## Usage
-
-* **List an NFT**: Connect your wallet, approve the marketplace contract, and set a price.
-* **Buy an NFT**: Click "Buy" on any listed NFT and confirm the transaction.
+* **Main Page**: Connect your wallet on the main page.
+![Main Page](assets/main.png)
+* **List an NFT**: Approve the marketplace contract, and set a price.
+![List an NFT](assets/myNftsPage.png)
+[List an NFT](assets/Approve_List.png)
 * **Make a Proposal**: Submit an offer for an NFT. Your MON is held in the contract.
-* **Accept Proposal**: As the seller, accept a proposal to transfer the NFT and receive funds. Other proposers are refunded automatically.
+![Make a Proposal](assets/makeAnoffer.png)
+* **Accept Proposal**: As the seller, accept a proposal to transfer the NFT and receive funds. 
+Other proposers are refunded automatically.
+![Accept Proposal](assets/AcceptProposal.png)
 * **Cancel Proposal**: Cancel your proposal to get your funds back.
+![Cancel Proposal](assets/cancelProposal.png)
+* **Unlist NFT**: Click *Unlist* button to unlist it from marketplace.
+* **View Proposals**: Click *View Proposals* button to view proposals.
+![View Proposals](assets/marketplacePage.png)
 ---
-
 ## Notes
 * This project is **not production ready** — use only for testing or development.
