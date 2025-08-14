@@ -67,6 +67,8 @@ owner: public(address)
 fee_bps: public(uint256)
 collected_fees: public(uint256)
 
+MAX_PROPOSALS: constant(uint256) = 1000
+
 # -------- Constructor --------
 @external
 def __init__():
@@ -110,7 +112,7 @@ def _remove_listing(nftAddress: address, tokenId: uint256):
 @internal
 def _remove_proposal(nftAddress: address, tokenId: uint256, proposer: address):
     count: uint256 = self.proposalCount[nftAddress][tokenId]
-    for i in range(1000):
+    for i in range(MAX_PROPOSALS):
         if i >= count:
             break
         if self.proposalAddresses[nftAddress][tokenId][i] == proposer:
@@ -152,7 +154,7 @@ def buyNFT(nftAddress: address, tokenId: uint256):
     buyer: address = msg.sender
     nftContract: ERC721_Interface = ERC721_Interface(nftAddress)
     seller: address = nftContract.ownerOf(tokenId)
-    assert seller != ZERO_ADDRESS, "Invalid seller"
+    assert seller != empty(address), "Invalid seller"
     assert self._is_approved_or_owner_for_market(nftAddress, seller, tokenId), "Marketplace not approved"
 
     seller_amount: uint256 = self._take_fee(price)
@@ -186,6 +188,7 @@ def cancelProposalNFTPrice(nftAddress: address, tokenId: uint256):
     self._remove_proposal(nftAddress, tokenId, msg.sender)
     log ProposalCancelled(msg.sender, nftAddress, tokenId)
 
+# -------- Accept Proposal with Refunds --------
 @external
 @nonreentrant("lock3")
 def acceptNFTProposal(nftAddress: address, tokenId: uint256, buyer: address):
@@ -196,18 +199,38 @@ def acceptNFTProposal(nftAddress: address, tokenId: uint256, buyer: address):
     assert proposed != 0, "No proposal from buyer"
     assert self._is_approved_or_owner_for_market(nftAddress, seller, tokenId), "Marketplace not approved"
 
+    # Transfer NFT to buyer
     nftContract.transferFrom(seller, buyer, tokenId)
+
+    # Send seller's amount after fee
     seller_amount: uint256 = self._take_fee(proposed)
     send(seller, seller_amount)
 
+    # Refund all other proposers
+    all_proposers: DynArray[address, MAX_PROPOSALS] = self.proposalAddresses[nftAddress][tokenId]
+    count: uint256 = self.proposalCount[nftAddress][tokenId]
+
+    for i in range(MAX_PROPOSALS):
+        if i >= count:
+            break
+        p: address = all_proposers[i]
+        if p != buyer:
+            amount: uint256 = self.proposals[nftAddress][tokenId][p]
+            if amount > 0:
+                self.proposals[nftAddress][tokenId][p] = 0
+                send(p, amount)
+
+    # Clear accepted proposal and remove buyer from proposal list
     self.proposals[nftAddress][tokenId][buyer] = 0
     self._remove_proposal(nftAddress, tokenId, buyer)
+
+    # Remove NFT listing
     self.prices[nftAddress][tokenId] = 0
     self._remove_listing(nftAddress, tokenId)
 
     log ProposalAccepted(seller, buyer, nftAddress, tokenId, proposed)
 
-# -------- Owner --------
+# -------- Fees --------
 @external
 def withdrawFees(to: address):
     assert msg.sender == self.owner, "Only owner"
@@ -245,8 +268,10 @@ def getProposalsForNFT(nftAddress: address, tokenId: uint256) -> (DynArray[addre
     proposers: DynArray[address, 1000] = self.proposalAddresses[nftAddress][tokenId]
     prices: DynArray[uint256, 1000] = []
     count: uint256 = self.proposalCount[nftAddress][tokenId]
-    for i in range(1000):
+
+    for i in range(MAX_PROPOSALS):
         if i >= count:
             break
         prices.append(self.proposals[nftAddress][tokenId][proposers[i]])
+
     return proposers, prices
