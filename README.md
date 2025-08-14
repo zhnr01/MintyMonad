@@ -15,7 +15,6 @@ A decentralized NFT marketplace built on the Monad blockchain.
 * **Cancel Proposals**: Users can cancel their proposals to get their funds back.
 * **Admin Functions**: Set marketplace fees and withdraw collected fees.
 * **Web Interface**: User-friendly interface built with Bootstrap and JavaScript.
-* **View Helpers**: Check NFT prices, proposals, listings, and contract balance from the frontend.
 
 ---
 
