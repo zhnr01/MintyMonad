@@ -8,6 +8,16 @@
 </div>
 {% endmacro %}
 
+{% macro proposals_row(proposals, current_wallet_address, nft_owner_address, contract_address, token_id) %}
+<div class="row">
+    {% for proposal in proposals %}
+    <div class="col">
+        {{ proposal_card(proposal, current_wallet_address, nft_owner_address, contract_address, token_id) }}
+    </div>
+    {% endfor %}
+</div>
+{% endmacro %}
+
 {% macro marketplace_nft_row(nfts, current_wallet_address) %}
 <div class="row">
     {% for nft in nfts %}
@@ -39,7 +49,7 @@
             <button class="btn btn-warning unlistBtn mt-auto" data-contract="{{ nft.contract_address }}" data-tokenid="{{ nft.token_id }}">
                 Unlist NFT
             </button>
-            <button class="btn btn-secondary viewProposalsBtn" data-contract="{{ nft.contract_address }}" data-tokenid="{{ nft.token_id }}">View proposals</button>
+            <a href="/nfts/view-proposals/{{ nft.contract_address | urlencode }}/{{ nft.token_id | urlencode }}" class="btn btn-secondary viewProposalsBtn">View proposals</a>
         {% else %}
             <a href="/nfts/list?contract_address={{ nft.contract_address | urlencode }}&token_id={{ nft.token_id | urlencode }}"
                class="btn btn-primary mt-auto">
@@ -68,13 +78,49 @@
             <strong id="token_id">Token ID:</strong> {{ nft.token_id }}<br>
             <strong>Price: </strong> {{ nft.price }} $MON
         </p>
-        
+        <a href="/nfts/view-proposals/{{ nft.contract_address | urlencode }}/{{ nft.token_id | urlencode }}" class="btn btn-secondary viewProposalsBtn">View proposals</a>
         {% if current_wallet_address and nft.owner|lower == current_wallet_address|lower %}
             <button class="btn btn-warning unlistBtn" data-contract="{{ nft.contract_address }}" data-tokenid="{{ nft.token_id }}">Unlist</button>
-            <button class="btn btn-secondary viewProposalsBtn" data-contract="{{ nft.contract_address }}" data-tokenid="{{ nft.token_id }}">View proposals</button>
-        {% else %}
-            <button class="btn btn-primary makeOfferBtn" data-contract="{{ nft.contract_address }}" data-tokenid="{{ nft.token_id }}">Make an offer</button>
+        {% endif %}
+        {% if current_wallet_address and current_wallet_address|lower != nft.owner|lower %}
+            <a href="/nfts/make_offer/{{ nft.contract_address | urlencode }}/{{ nft.token_id | urlencode }}"
+            class="btn btn-primary makeOfferBtn"
+            data-contract="{{ nft.contract_address }}"
+            data-tokenid="{{ nft.token_id }}">Make an offer</a>
+        {% endif %}
+
+    </div>
+</div>
+{% endmacro %}
+
+
+{% macro proposal_card(proposal, current_wallet_address, nft_owner_address, contract_address, token_id) %}
+<div class="card mb-3" style="width: 18rem;">
+    <div class="card-body">
+        <p class="card-text">
+            <strong>Proposer:</strong> {{ proposal.proposer }}<br>
+            <strong>Price:</strong> {{ proposal.price }} $MON
+        </p>
+        {% if current_wallet_address and proposal.proposer == current_wallet_address %}
+        <button class="btn btn-danger cancelProposal" 
+                data-proposer="{{ proposal.proposer }}" 
+                data-price="{{ proposal.price }}"
+                data-contract="{{ contract_address }}"
+                data-tokenid="{{ token_id }}">
+            Cancel Proposal
+        </button>
+        {% endif %}
+        {% if current_wallet_address and nft_owner_address and current_wallet_address == nft_owner_address %}
+        <button class="btn btn-success acceptProposal" 
+                data-proposer="{{ proposal.proposer }}" 
+                data-price="{{ proposal.price }}"
+                data-contract="{{ contract_address }}"
+                data-tokenid="{{ token_id }}"
+                data-buyer="{{proposal.proposer}}">
+            Accept Proposal
+        </button>
         {% endif %}
     </div>
 </div>
 {% endmacro %}
+
