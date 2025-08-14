@@ -12,13 +12,12 @@ class Config:
     BOOTSTRAP_BOOTSWATCH_THEME  = 'pulse'
     ALCHEMY_API_KEY = os.environ.get('ALCHEMY_API_KEY')
     ALCHEMY_URL = f"https://monad-testnet.g.alchemy.com/nft/v3/{ALCHEMY_API_KEY}/getNFTsForOwner"
-    NFT_MARKETPLACE_CONTRACT_ADDRESS = '0x7dA4Bf6D0EdC392C82D6C8A5aac414810689B9AE'
+    NFT_MARKETPLACE_CONTRACT_ADDRESS = '0xd4011963C4e1Ca6e1279b6398C4Cc352d0069d86'
     MONAD_RPC_URL = os.environ.get('MONAD_RPC')
 
     @staticmethod
     def init_app(app):
         pass
-
 
 class DevelopmentConfig(Config):
     DEBUG = True
