@@ -1,3 +1,4 @@
+import base64
 import json
 from flask import jsonify, render_template, current_app, request, session, url_for
 from . import nfts  
@@ -42,7 +43,6 @@ def my_nfts():
                 "token_id": nft['tokenId']
             })
 
-        # Now fetch all listed NFTs from marketplace and build a lookup set
         rpc_url = current_app.config.get('MONAD_RPC_URL')
         marketplace_address = Web3.to_checksum_address(
             current_app.config.get('NFT_MARKETPLACE_CONTRACT_ADDRESS')
@@ -72,6 +72,7 @@ def my_nfts():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 @nfts.route('/marketplace-data', methods=['GET'])
 def marketplace_data():
     try:
@@ -83,27 +84,9 @@ def marketplace_data():
             marketplace_abi = json.load(f)
 
         erc721_abi = [
-            {
-                "constant": True,
-                "inputs": [],
-                "name": "symbol",
-                "outputs": [{"name": "", "type": "string"}],
-                "type": "function"
-            },
-            {
-                "constant": True,
-                "inputs": [{"name": "tokenId", "type": "uint256"}],
-                "name": "tokenURI",
-                "outputs": [{"name": "", "type": "string"}],
-                "type": "function"
-            },
-            {
-                "constant": True,
-                "inputs": [{"name": "tokenId", "type": "uint256"}],
-                "name": "ownerOf",
-                "outputs": [{"name": "", "type": "address"}],
-                "type": "function"
-            }
+            {"constant": True, "inputs": [], "name": "symbol", "outputs": [{"name": "", "type": "string"}], "type": "function"},
+            {"constant": True, "inputs": [{"name": "tokenId", "type": "uint256"}], "name": "tokenURI", "outputs": [{"name": "", "type": "string"}], "type": "function"},
+            {"constant": True, "inputs": [{"name": "tokenId", "type": "uint256"}], "name": "ownerOf", "outputs": [{"name": "", "type": "address"}], "type": "function"}
         ]
 
         w3 = Web3(Web3.HTTPProvider(rpc_url))
@@ -117,22 +100,37 @@ def marketplace_data():
 
             price_wei = marketplace_contract.functions.getPrice(nft_address, token_id).call()
 
+            # Get token symbol
             try:
                 symbol = nft_contract.functions.symbol().call()
             except Exception:
                 symbol = "Unknown"
 
+            # Get token metadata
             try:
                 token_uri = nft_contract.functions.tokenURI(token_id).call()
+
+                # Convert IPFS URI to gateway URL
                 if token_uri.startswith("ipfs://"):
                     token_uri = token_uri.replace("ipfs://", "https://ipfs.io/ipfs/")
-                metadata = requests.get(token_uri).json()
+
+                # Handle data URI (on-chain metadata)
+                if token_uri.startswith("data:"):
+                    base64_data = token_uri.split(",", 1)[1]
+                    decoded_json = base64.b64decode(base64_data).decode("utf-8")
+                    metadata = json.loads(decoded_json)
+                else:
+                    metadata = requests.get(token_uri).json()
+
+                # Get image URL from metadata
                 image_url = metadata.get("image", url_for('static', filename='images/dummy.png'))
                 if image_url.startswith("ipfs://"):
                     image_url = image_url.replace("ipfs://", "https://ipfs.io/ipfs/")
-            except Exception:
+            except Exception as e:
+                print(f"Error fetching metadata for token {token_id}:", e)
                 image_url = url_for('static', filename='images/dummy.png')
 
+            # Get owner
             try:
                 owner = nft_contract.functions.ownerOf(token_id).call()
             except Exception:
@@ -146,7 +144,62 @@ def marketplace_data():
                 "image_url": image_url,
                 "owner": owner
             })
+
         return render_template('marketplace.html', nfts=results, current_wallet_address=session.get('wallet_address'))
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@nfts.route('/view-proposals/<contract_address>/<token_id>')
+def view_proposals(contract_address, token_id):
+    rpc_url = current_app.config.get('MONAD_RPC_URL')
+    w3 = Web3(Web3.HTTPProvider(rpc_url))
+    marketplace_address = Web3.to_checksum_address(
+        current_app.config.get('NFT_MARKETPLACE_CONTRACT_ADDRESS')
+    )
+
+    with open('/home/byte/Desktop/minty monad/app/static/NFTMarketplace.abi.json') as f:
+        marketplace_abi = json.load(f)
+
+    contract_address = Web3.to_checksum_address(unquote(contract_address))
+    token_id = int(unquote(token_id))
+
+    contract = w3.eth.contract(address=marketplace_address, abi=marketplace_abi)
+    proposers, prices = contract.functions.getProposalsForNFT(contract_address, token_id).call()
+
+    proposals = []
+    for proposer, price in zip(proposers, prices):
+        proposals.append({
+            "proposer": proposer,
+            "price": Web3.from_wei(price, "ether")
+        })
+
+    erc721_abi = [
+        {
+            "constant": True,
+            "inputs": [{"name": "_tokenId", "type": "uint256"}],
+            "name": "ownerOf",
+            "outputs": [{"name": "", "type": "address"}],
+            "payable": False,
+            "stateMutability": "view",
+            "type": "function"
+        }
+    ]
+    nft_contract = w3.eth.contract(address=contract_address, abi=erc721_abi)
+    nft_owner_address = nft_contract.functions.ownerOf(token_id).call()
+
+    return render_template(
+        'view-proposals.html',
+        proposals=proposals,
+        contract_address=contract_address,
+        token_id=token_id,
+        current_wallet_address=session.get('wallet_address'),
+        nft_owner_address=nft_owner_address
+    )
+
+
+@nfts.route('/make_offer/<contract_address>/<token_id>')
+def make_offer(contract_address, token_id):
+    contract_address = unquote(contract_address)
+    token_id = unquote(token_id)
+    return render_template('makeOffer.html', contract_address=contract_address, token_id=token_id)
