@@ -1,6 +1,9 @@
 import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.8.1/dist/ethers.min.js";
 
-const MARKETPLACE_ADDRESS = "0x7dA4Bf6D0EdC392C82D6C8A5aac414810689B9AE";
+
+const contract_response = await fetch('/api/marketplace_contract_address');
+const marketplace_contract_dict = await contract_response.json();
+const MARKETPLACE_ADDRESS = marketplace_contract_dict['contract_address']
 
 // ERC-721 minimal ABI for approval + interface check
 const ERC721_ABI = [
