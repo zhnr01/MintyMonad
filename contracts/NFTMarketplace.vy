@@ -135,11 +135,34 @@ def setNFTPrice(nftAddress: address, tokenId: uint256, price: uint256):
     log NFTListed(msg.sender, nftAddress, tokenId, price)
 
 @external
+@nonreentrant("lock4")
 def unlistNFT(nftAddress: address, tokenId: uint256):
     nftContract: ERC721_Interface = ERC721_Interface(nftAddress)
     assert nftContract.ownerOf(tokenId) == msg.sender, "Only owner can unlist"
+
+    # Refund all proposers if any
+    count: uint256 = self.proposalCount[nftAddress][tokenId]
+    if count > 0:
+        proposers: DynArray[address, MAX_PROPOSALS] = self.proposalAddresses[nftAddress][tokenId]
+
+        for i: uint256 in range(MAX_PROPOSALS):
+            if i >= count:
+                break
+            proposer: address = proposers[i]
+            amount: uint256 = self.proposals[nftAddress][tokenId][proposer]
+            if amount > 0:
+                self.proposals[nftAddress][tokenId][proposer] = 0
+                send(proposer, amount)
+                log ProposalCancelled(proposer, nftAddress, tokenId)  # optional: track refunds
+
+        # Clear proposal tracking
+        self.proposalAddresses[nftAddress][tokenId] = []
+        self.proposalCount[nftAddress][tokenId] = 0
+
+    # Remove listing
     self.prices[nftAddress][tokenId] = 0
     self._remove_listing(nftAddress, tokenId)
+
     log NFTUnlisted(msg.sender, nftAddress, tokenId)
 
 # -------- Buying --------
