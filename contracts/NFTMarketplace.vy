@@ -145,7 +145,7 @@ def unlistNFT(nftAddress: address, tokenId: uint256):
     if count > 0:
         proposers: DynArray[address, MAX_PROPOSALS] = self.proposalAddresses[nftAddress][tokenId]
 
-        for i: uint256 in range(MAX_PROPOSALS):
+        for i in range(MAX_PROPOSALS):
             if i >= count:
                 break
             proposer: address = proposers[i]
