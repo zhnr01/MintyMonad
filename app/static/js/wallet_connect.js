@@ -61,7 +61,6 @@ async function connectWallet() {
         walletConnectBtn.textContent = `Connected: ${truncatedAddress}`;
         walletConnectBtn.disabled = true;
 
-        // Optional: Send to backend
         const response = await fetch('/api/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

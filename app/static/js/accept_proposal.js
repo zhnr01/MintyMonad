@@ -1,7 +1,7 @@
 import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.8.1/dist/ethers.min.js";
 
 const MONAD_TESTNET = {
-    chainId: '0x279f', // 10143
+    chainId: '0x279f', 
     chainName: 'Monad Testnet',
     nativeCurrency: {
         name: 'Monad',
@@ -41,7 +41,6 @@ document.addEventListener('click', async function (e) {
         const buyerAddress = button.getAttribute('data-buyer');
 
         try {
-            // Ensure we are connected to Monad Testnet
             const provider = await ensureMonadNetwork();
             await window.ethereum.request({ method: 'eth_requestAccounts' });
             const signer = await provider.getSigner();
