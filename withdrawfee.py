@@ -7,8 +7,8 @@ load_dotenv()
 
 MONAD_RPC = os.environ.get('MONAD_RPC')
 PRIVATE_KEY = os.environ.get('PRIVATE_KEY')
-ACCOUNT_ADDRESS = '0xYourAccountAddressHere'  # Replace with your account address
-CONTRACT_ADDRESS = '0x7a5271F3Ca14b7541b3E5d9C80691fa983eC66BF'
+ACCOUNT_ADDRESS = '0xaddress'  # Replace with your account address
+CONTRACT_ADDRESS = '0x02F54869f96E809828d68c3D6D88482d00Aa08ae'
 MON_TOKEN_ADDRESS = ''
 
 with open("contracts/NFTMarketplace.abi.json") as f:
