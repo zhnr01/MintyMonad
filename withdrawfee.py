@@ -7,28 +7,30 @@ load_dotenv()
 
 MONAD_RPC = os.environ.get('MONAD_RPC')
 PRIVATE_KEY = os.environ.get('PRIVATE_KEY')
-ACCOUNT_ADDRESS = '0xaddress'  # Replace with your account address
-CONTRACT_ADDRESS = '0x02F54869f96E809828d68c3D6D88482d00Aa08ae'
-MON_TOKEN_ADDRESS = ''
+ACCOUNT_ADDRESS = '0xa8F4f8e7c8981B4424cB2640F3779B3a8068994b'  # Your wallet (must be contract owner)
+CONTRACT_ADDRESS = '0x02F54869f96E809828d68c3D6D88482d00Aa08ae'  # Marketplace contract
 
+# Load ABI
 with open("contracts/NFTMarketplace.abi.json") as f:
     MARKETPLACE_ABI = json.load(f)
 
-with open("contracts/MONToken.abi.json") as f:
-    TOKEN_ABI = json.load(f)
-
+# Connect Web3
 w3 = Web3(Web3.HTTPProvider(MONAD_RPC))
 marketplace = w3.eth.contract(address=Web3.to_checksum_address(CONTRACT_ADDRESS), abi=MARKETPLACE_ABI)
-mon_token = w3.eth.contract(address=Web3.to_checksum_address(MON_TOKEN_ADDRESS), abi=TOKEN_ABI)
 
-balance = mon_token.functions.balanceOf(CONTRACT_ADDRESS).call()
-if balance == 0:
-    print("Marketplace has no MON tokens.")
+# Check how much fees are available
+collected_fees = marketplace.functions.collected_fees().call()
+if collected_fees == 0:
+    print("Marketplace has no fees to withdraw.")
     exit()
 
+# Withdraw fees
 withdraw_to = Web3.to_checksum_address(ACCOUNT_ADDRESS)
 gas_price = w3.eth.gas_price
-gas_estimate = marketplace.functions.withdrawFees(withdraw_to).estimate_gas({'from': ACCOUNT_ADDRESS})
+
+gas_estimate = marketplace.functions.withdrawFees(withdraw_to).estimate_gas({
+    'from': ACCOUNT_ADDRESS
+})
 
 transaction = marketplace.functions.withdrawFees(withdraw_to).build_transaction({
     'from': ACCOUNT_ADDRESS,
