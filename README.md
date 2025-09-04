@@ -3,7 +3,7 @@
 A decentralized NFT marketplace built on the Monad blockchain.
 ---
 
-**NFT Marketplace Contract Address:** `0x7a5271F3Ca14b7541b3E5d9C80691fa983eC66BF`
+**NFT Marketplace Contract Address:** `0x02F54869f96E809828d68c3D6D88482d00Aa08ae`
 
 ## Features
 
