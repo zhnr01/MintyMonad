@@ -37,7 +37,7 @@ def wallet_logout():
 @api.route('/marketplace_abi', methods=['GET'])
 def get_marketplace_abi():
     try:
-        ABI_PATH = '/home/byte/Desktop/minty monad/app/static/NFTMarketplace.abi.json'
+        ABI_PATH = '/home/byte/Desktop/minty monad/app/static/contract-abi/NFTMarketplace.abi.json'
         with open(ABI_PATH, 'r') as f:
             abi = json.load(f)
         

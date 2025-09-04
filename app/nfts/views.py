@@ -47,7 +47,7 @@ def my_nfts():
         marketplace_address = Web3.to_checksum_address(
             current_app.config.get('NFT_MARKETPLACE_CONTRACT_ADDRESS')
         )
-        with open('/home/byte/Desktop/minty monad/app/static/NFTMarketplace.abi.json') as f:
+        with open('/home/byte/Desktop/minty monad/app/static/contract-abi/NFTMarketplace.abi.json') as f:
             marketplace_abi = json.load(f)
 
         w3 = Web3(Web3.HTTPProvider(rpc_url))
@@ -80,7 +80,7 @@ def marketplace_data():
         marketplace_address = Web3.to_checksum_address(
             current_app.config.get('NFT_MARKETPLACE_CONTRACT_ADDRESS')
         )
-        with open('/home/byte/Desktop/minty monad/app/static/NFTMarketplace.abi.json') as f:
+        with open('/home/byte/Desktop/minty monad/app/static/contract-abi/NFTMarketplace.abi.json') as f:
             marketplace_abi = json.load(f)
 
         erc721_abi = [
@@ -158,7 +158,7 @@ def view_proposals(contract_address, token_id):
         current_app.config.get('NFT_MARKETPLACE_CONTRACT_ADDRESS')
     )
 
-    with open('/home/byte/Desktop/minty monad/app/static/NFTMarketplace.abi.json') as f:
+    with open('/home/byte/Desktop/minty monad/app/static/contract-abi/NFTMarketplace.abi.json') as f:
         marketplace_abi = json.load(f)
 
     contract_address = Web3.to_checksum_address(unquote(contract_address))
