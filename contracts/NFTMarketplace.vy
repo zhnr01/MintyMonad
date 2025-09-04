@@ -73,7 +73,7 @@ MAX_PROPOSALS: constant(uint256) = 1000
 @external
 def __init__():
     self.owner = msg.sender
-    self.fee_bps = 0
+    self.fee_bps = 500
     self.listedCount = 0
 
 # -------- Internal Helpers --------
@@ -269,7 +269,7 @@ def setFeeBps(new_bps: uint256):
     assert new_bps <= 1000
     self.fee_bps = new_bps
 
-# -------- View Helpers --------
+
 @view
 @external
 def getPrice(nftAddress: address, tokenId: uint256) -> uint256:
