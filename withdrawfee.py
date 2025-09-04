@@ -7,7 +7,7 @@ load_dotenv()
 
 MONAD_RPC = os.environ.get('MONAD_RPC')
 PRIVATE_KEY = os.environ.get('PRIVATE_KEY')
-ACCOUNT_ADDRESS = '0xa8F4f8e7c8981B4424cB2640F3779B3a8068994b'  # Your wallet (must be contract owner)
+ACCOUNT_ADDRESS = '0xyouraddress'  # Your wallet (must be contract owner)
 CONTRACT_ADDRESS = '0x02F54869f96E809828d68c3D6D88482d00Aa08ae'  # Marketplace contract
 
 # Load ABI
