@@ -54,13 +54,11 @@ def my_nfts():
         marketplace_contract = w3.eth.contract(address=marketplace_address, abi=marketplace_abi)
         listed_nfts, listed_token_ids = marketplace_contract.functions.getAllListedNFTs().call()
 
-        # Build a set of (contract_address.lower(), token_id) for quick lookup
         listed_set = set(
             (addr.lower(), tid)
             for addr, tid in zip(listed_nfts, listed_token_ids)
         )
 
-        # Add 'listed' flag to each owned NFT
         for nft in owned_nfts:
             key = (nft['contract_address'].lower(), int(nft['token_id']))
             nft['listed'] = key in listed_set
@@ -100,21 +98,15 @@ def marketplace_data():
 
             price_wei = marketplace_contract.functions.getPrice(nft_address, token_id).call()
 
-            # Get token symbol
             try:
                 symbol = nft_contract.functions.symbol().call()
             except Exception:
                 symbol = "Unknown"
 
-            # Get token metadata
             try:
                 token_uri = nft_contract.functions.tokenURI(token_id).call()
-
-                # Convert IPFS URI to gateway URL
                 if token_uri.startswith("ipfs://"):
                     token_uri = token_uri.replace("ipfs://", "https://ipfs.io/ipfs/")
-
-                # Handle data URI (on-chain metadata)
                 if token_uri.startswith("data:"):
                     base64_data = token_uri.split(",", 1)[1]
                     decoded_json = base64.b64decode(base64_data).decode("utf-8")
@@ -122,7 +114,6 @@ def marketplace_data():
                 else:
                     metadata = requests.get(token_uri).json()
 
-                # Get image URL from metadata
                 image_url = metadata.get("image", url_for('static', filename='images/dummy.png'))
                 if image_url.startswith("ipfs://"):
                     image_url = image_url.replace("ipfs://", "https://ipfs.io/ipfs/")
@@ -130,7 +121,6 @@ def marketplace_data():
                 print(f"Error fetching metadata for token {token_id}:", e)
                 image_url = url_for('static', filename='images/dummy.png')
 
-            # Get owner
             try:
                 owner = nft_contract.functions.ownerOf(token_id).call()
             except Exception:
@@ -139,7 +129,7 @@ def marketplace_data():
             results.append({
                 "contract_address": nft_address,
                 "token_id": token_id,
-                "price": w3.from_wei(price_wei, 'ether'),  # in MON
+                "price": w3.from_wei(price_wei, 'ether'),  
                 "symbol": symbol,
                 "image_url": image_url,
                 "owner": owner
