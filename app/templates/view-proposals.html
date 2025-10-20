@@ -2,6 +2,10 @@
 {% from 'bootstrap4/form.html' import render_form %}
 {% from "_macros.html" import proposals_row%}
 
+
+        {% block title %}
+        <title>Proposals</title>
+        {% endblock %}
 {% block container %}
 <div class="container text-center">
     {% set total = proposals | length %}
