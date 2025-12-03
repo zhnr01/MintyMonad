@@ -1,42 +1,49 @@
-{% macro nft_row(nfts) %}
+{# Generic reusable helpers to reduce duplication #}
+{% macro image_block(image_url) %}
+    {% if image_url is string and image_url.startswith('<svg') %}
+        <div class="card-img-top" alt="NFT Image">
+            {{ image_url | safe }}
+        </div>
+    {% else %}
+        <img src="{{ image_url }}" class="card-img-top" alt="NFT Image">
+    {% endif %}
+{% endmacro %}
+
+{# Grid row macro with caller for flexible item rendering #}
+{% macro grid_row(items) %}
 <div class="row">
-    {% for nft in nfts %}
+    {% for item in items %}
     <div class="col">
-        {{ nft_card(nft) }}
+        {% if caller %}
+            {{ caller(item) }}
+        {% endif %}
     </div>
     {% endfor %}
 </div>
+{% endmacro %}
+
+{# Backward-compatible wrappers using grid_row #}
+{% macro nft_row(nfts) %}
+    {% call(item) grid_row(nfts) %}
+        {{ nft_card(item) }}
+    {% endcall %}
 {% endmacro %}
 
 {% macro proposals_row(proposals, current_wallet_address, nft_owner_address, contract_address, token_id) %}
-<div class="row">
-    {% for proposal in proposals %}
-    <div class="col">
-        {{ proposal_card(proposal, current_wallet_address, nft_owner_address, contract_address, token_id) }}
-    </div>
-    {% endfor %}
-</div>
+    {% call(p) grid_row(proposals) %}
+        {{ proposal_card(p, current_wallet_address, nft_owner_address, contract_address, token_id) }}
+    {% endcall %}
 {% endmacro %}
 
 {% macro marketplace_nft_row(nfts, current_wallet_address) %}
-<div class="row">
-    {% for nft in nfts %}
-    <div class="col">
-        {{ marketplace_nft_card(nft, current_wallet_address) }}
-    </div>
-    {% endfor %}
-</div>
+    {% call(item) grid_row(nfts) %}
+        {{ marketplace_nft_card(item, current_wallet_address) }}
+    {% endcall %}
 {% endmacro %}
 
 {% macro nft_card(nft) %}
 <div class="card d-flex flex-column" style="width: 18rem;">
-    {% if nft.image_url is string and nft.image_url.startswith('<svg') %}
-        <div class="card-img-top" alt="NFT Image">
-            {{ nft.image_url | safe }}
-        </div>
-    {% else %}
-        <img src="{{ nft.image_url }}" class="card-img-top" alt="NFT Image">
-    {% endif %}
+    {{ image_block(nft.image_url) }}
     <div class="card-body flex-grow-1 d-flex flex-column">
         <h5 class="card-title">{{ nft.name }}</h5>
         <p class="card-text mb-3">
@@ -63,13 +70,7 @@
 
 {% macro marketplace_nft_card(nft, current_wallet_address=None) %}
 <div class="card" style="width: 18rem;">
-    {% if nft.image_url is string and nft.image_url.startswith('<svg') %}
-        <div class="card-img-top" alt="NFT Image">
-            {{ nft.image_url | safe }}
-        </div>
-    {% else %}
-        <img src="{{ nft.image_url }}" class="card-img-top" alt="NFT Image">
-    {% endif %}
+    {{ image_block(nft.image_url) }}
     <div class="card-body">
         <p class="card-text">
             <strong>Symbol:</strong> {{ nft.symbol }}<br>
