@@ -1,10 +1,87 @@
 import base64
 import json
+import os
 from flask import jsonify, render_template, current_app, request, session, url_for
-from . import nfts  
+from . import nfts
 from urllib.parse import unquote
 import requests
 from web3 import Web3
+
+
+def _abi_path() -> str:
+    return os.path.join(current_app.root_path, 'static', 'contract-abi', 'NFTMarketplace.abi.json')
+
+
+def _get_w3() -> Web3:
+    rpc_url = current_app.config.get('MONAD_RPC_URL')
+    return Web3(Web3.HTTPProvider(rpc_url))
+
+
+def _get_marketplace_contract(w3: Web3 = None):
+    w3 = w3 or _get_w3()
+    marketplace_address = Web3.to_checksum_address(
+        current_app.config.get('NFT_MARKETPLACE_CONTRACT_ADDRESS')
+    )
+    with open(_abi_path()) as f:
+        marketplace_abi = json.load(f)
+    return w3.eth.contract(address=marketplace_address, abi=marketplace_abi)
+
+
+def _erc721_abi():
+    return [
+        {
+            "constant": True,
+            "inputs": [],
+            "name": "symbol",
+            "outputs": [{"name": "", "type": "string"}],
+            "type": "function",
+        },
+        {
+            "constant": True,
+            "inputs": [{"name": "tokenId", "type": "uint256"}],
+            "name": "tokenURI",
+            "outputs": [{"name": "", "type": "string"}],
+            "type": "function",
+        },
+        {
+            "constant": True,
+            "inputs": [{"name": "tokenId", "type": "uint256"}],
+            "name": "ownerOf",
+            "outputs": [{"name": "", "type": "address"}],
+            "type": "function",
+        },
+    ]
+
+
+def _normalize_ipfs(url: str) -> str:
+    if not isinstance(url, str):
+        return url
+    if url.startswith("ipfs://"):
+        return url.replace("ipfs://", "https://ipfs.io/ipfs/")
+    return url
+
+
+def _load_token_metadata(token_uri: str) -> dict:
+    token_uri = _normalize_ipfs(token_uri)
+    if not token_uri:
+        return {}
+    try:
+        if token_uri.startswith("data:"):
+            base64_data = token_uri.split(",", 1)[1]
+            decoded_json = base64.b64decode(base64_data).decode("utf-8")
+            return json.loads(decoded_json)
+        resp = requests.get(token_uri, timeout=15)
+        resp.raise_for_status()
+        return resp.json()
+    except Exception:
+        current_app.logger.exception("Failed to load token metadata from %s", token_uri)
+        return {}
+
+
+def _image_from_metadata(metadata: dict) -> str:
+    image_url = metadata.get("image") if isinstance(metadata, dict) else None
+    image_url = _normalize_ipfs(image_url) if image_url else None
+    return image_url or url_for('static', filename='images/dummy.png')
 
 
 @nfts.route('/list', methods=['GET'])
@@ -43,15 +120,8 @@ def my_nfts():
                 "token_id": nft['tokenId']
             })
 
-        rpc_url = current_app.config.get('MONAD_RPC_URL')
-        marketplace_address = Web3.to_checksum_address(
-            current_app.config.get('NFT_MARKETPLACE_CONTRACT_ADDRESS')
-        )
-        with open('/home/byte/Desktop/minty monad/app/static/contract-abi/NFTMarketplace.abi.json') as f:
-            marketplace_abi = json.load(f)
-
-        w3 = Web3(Web3.HTTPProvider(rpc_url))
-        marketplace_contract = w3.eth.contract(address=marketplace_address, abi=marketplace_abi)
+        w3 = _get_w3()
+        marketplace_contract = _get_marketplace_contract(w3)
         listed_nfts, listed_token_ids = marketplace_contract.functions.getAllListedNFTs().call()
 
         listed_set = set(
@@ -66,29 +136,19 @@ def my_nfts():
         return render_template('my-nfts.html', nfts=owned_nfts)
 
     except requests.exceptions.RequestException as e:
+        current_app.logger.exception("Failed to fetch owned NFTs from Alchemy")
         return jsonify({"error": str(e)}), 500
     except Exception as e:
+        current_app.logger.exception("Unexpected error in my_nfts")
         return jsonify({"error": str(e)}), 500
 
 
 @nfts.route('/marketplace-data', methods=['GET'])
 def marketplace_data():
     try:
-        rpc_url = current_app.config.get('MONAD_RPC_URL')
-        marketplace_address = Web3.to_checksum_address(
-            current_app.config.get('NFT_MARKETPLACE_CONTRACT_ADDRESS')
-        )
-        with open('/home/byte/Desktop/minty monad/app/static/contract-abi/NFTMarketplace.abi.json') as f:
-            marketplace_abi = json.load(f)
-
-        erc721_abi = [
-            {"constant": True, "inputs": [], "name": "symbol", "outputs": [{"name": "", "type": "string"}], "type": "function"},
-            {"constant": True, "inputs": [{"name": "tokenId", "type": "uint256"}], "name": "tokenURI", "outputs": [{"name": "", "type": "string"}], "type": "function"},
-            {"constant": True, "inputs": [{"name": "tokenId", "type": "uint256"}], "name": "ownerOf", "outputs": [{"name": "", "type": "address"}], "type": "function"}
-        ]
-
-        w3 = Web3(Web3.HTTPProvider(rpc_url))
-        marketplace_contract = w3.eth.contract(address=marketplace_address, abi=marketplace_abi)
+        w3 = _get_w3()
+        marketplace_contract = _get_marketplace_contract(w3)
+        erc721_abi = _erc721_abi()
         listed_nfts, listed_token_ids = marketplace_contract.functions.getAllListedNFTs().call()
 
         results = []
@@ -105,20 +165,10 @@ def marketplace_data():
 
             try:
                 token_uri = nft_contract.functions.tokenURI(token_id).call()
-                if token_uri.startswith("ipfs://"):
-                    token_uri = token_uri.replace("ipfs://", "https://ipfs.io/ipfs/")
-                if token_uri.startswith("data:"):
-                    base64_data = token_uri.split(",", 1)[1]
-                    decoded_json = base64.b64decode(base64_data).decode("utf-8")
-                    metadata = json.loads(decoded_json)
-                else:
-                    metadata = requests.get(token_uri).json()
-
-                image_url = metadata.get("image", url_for('static', filename='images/dummy.png'))
-                if image_url.startswith("ipfs://"):
-                    image_url = image_url.replace("ipfs://", "https://ipfs.io/ipfs/")
-            except Exception as e:
-                print(f"Error fetching metadata for token {token_id}:", e)
+                metadata = _load_token_metadata(token_uri)
+                image_url = _image_from_metadata(metadata)
+            except Exception:
+                current_app.logger.exception("Error fetching metadata for token %s", token_id)
                 image_url = url_for('static', filename='images/dummy.png')
 
             try:
@@ -138,24 +188,17 @@ def marketplace_data():
         return render_template('marketplace.html', nfts=results, current_wallet_address=session.get('wallet_address'))
 
     except Exception as e:
+        current_app.logger.exception("Unexpected error in marketplace_data")
         return jsonify({"error": str(e)}), 500
 
 @nfts.route('/view-proposals/<contract_address>/<token_id>')
 def view_proposals(contract_address, token_id):
-    rpc_url = current_app.config.get('MONAD_RPC_URL')
-    w3 = Web3(Web3.HTTPProvider(rpc_url))
-    marketplace_address = Web3.to_checksum_address(
-        current_app.config.get('NFT_MARKETPLACE_CONTRACT_ADDRESS')
-    )
-
-    with open('/home/byte/Desktop/minty monad/app/static/contract-abi/NFTMarketplace.abi.json') as f:
-        marketplace_abi = json.load(f)
+    w3 = _get_w3()
+    marketplace_contract = _get_marketplace_contract(w3)
 
     contract_address = Web3.to_checksum_address(unquote(contract_address))
     token_id = int(unquote(token_id))
-
-    contract = w3.eth.contract(address=marketplace_address, abi=marketplace_abi)
-    proposers, prices = contract.functions.getProposalsForNFT(contract_address, token_id).call()
+    proposers, prices = marketplace_contract.functions.getProposalsForNFT(contract_address, token_id).call()
 
     proposals = []
     for proposer, price in zip(proposers, prices):
@@ -164,18 +207,8 @@ def view_proposals(contract_address, token_id):
             "price": Web3.from_wei(price, "ether")
         })
 
-    erc721_abi = [
-        {
-            "constant": True,
-            "inputs": [{"name": "_tokenId", "type": "uint256"}],
-            "name": "ownerOf",
-            "outputs": [{"name": "", "type": "address"}],
-            "payable": False,
-            "stateMutability": "view",
-            "type": "function"
-        }
-    ]
-    nft_contract = w3.eth.contract(address=contract_address, abi=erc721_abi)
+    erc721_owner_abi = [a for a in _erc721_abi() if a["name"] == "ownerOf"]
+    nft_contract = w3.eth.contract(address=contract_address, abi=erc721_owner_abi)
     nft_owner_address = nft_contract.functions.ownerOf(token_id).call()
 
     return render_template(
