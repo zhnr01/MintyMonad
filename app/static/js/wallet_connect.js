@@ -3,24 +3,39 @@ import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.8.1/dist/ethers.mi
 const walletConnectBtn = document.getElementById('walletConnectBtn');
 const walletDisconnectBtn = document.getElementById('walletDisconnectBtn');
 
-const MONAD_TESTNET = {
-    chainId: '0x279f', // 10143 in hexadecimal
-    chainName: 'Monad Testnet',
-    nativeCurrency: {
-        name: 'Monad',
-        symbol: 'MON',
-        decimals: 18
-    },
-    rpcUrls: ['https://10143.rpc.thirdweb.com'],
-    blockExplorerUrls: ['https://testnet.monadexplorer.com/'],
-    blockGasLimit: 150000000
-};
+let MONAD_TESTNET = null;
+
+async function loadNetworkConfig() {
+    try {
+        const resp = await fetch('/api/network_config');
+        if (!resp.ok) throw new Error('Failed to fetch network config');
+        const cfg = await resp.json();
+        // Ensure chainId is a hex string like '0x279f'
+        if (typeof cfg.chainId === 'number') cfg.chainId = '0x' + cfg.chainId.toString(16);
+        MONAD_TESTNET = cfg;
+        return cfg;
+    } catch (err) {
+        console.error('Could not load network config:', err);
+        // Fallback to sensible defaults
+        MONAD_TESTNET = {
+            chainId: '0x279f', // 10143
+            chainName: 'Monad Testnet',
+            nativeCurrency: { name: 'Monad', symbol: 'MON', decimals: 18 },
+            rpcUrls: ['https://10143.rpc.thirdweb.com'],
+            blockExplorerUrls: ['https://testnet.monadexplorer.com/'],
+            blockGasLimit: 150000000
+        };
+        return MONAD_TESTNET;
+    }
+}
 
 async function connectWallet() {
     if (!window.ethereum) {
         alert('Please install MetaMask or another Ethereum wallet extension!');
         return;
     }
+    // Ensure network configuration is loaded from backend
+    if (!MONAD_TESTNET) await loadNetworkConfig();
 
     try {
         // First, explicitly request permissions to trigger the popup every time
@@ -35,7 +50,9 @@ async function connectWallet() {
         const currentNetwork = await provider.getNetwork();
 
         // Switch to Monad Testnet if not already connected
-        if (currentNetwork.chainId !== BigInt(MONAD_TESTNET.chainId)) {
+        // currentNetwork.chainId is bigint; MONAD_TESTNET.chainId may be hex string
+        const targetChainId = typeof MONAD_TESTNET.chainId === 'string' ? BigInt(MONAD_TESTNET.chainId) : BigInt(MONAD_TESTNET.chainId);
+        if (currentNetwork.chainId !== targetChainId) {
             try {
                 await window.ethereum.request({
                     method: 'wallet_addEthereumChain',
