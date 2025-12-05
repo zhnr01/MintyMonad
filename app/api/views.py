@@ -56,3 +56,30 @@ def get_marketplace_abi():
 @api.route('/marketplace_contract_address')
 def get_marketplace_contract_address():
     return jsonify({'contract_address':current_app.config.get('NFT_MARKETPLACE_CONTRACT_ADDRESS')})
+
+
+@api.route('/network_config', methods=['GET'])
+def get_network_config():
+    """Return network configuration for the frontend wallet to use when adding/switching chains."""
+    # Provide sensible defaults but allow overrides via app config / env
+    chain_id_dec = current_app.config.get('MONAD_CHAIN_ID', 10143)
+    try:
+        chain_id_int = int(chain_id_dec)
+    except Exception:
+        chain_id_int = 10143
+
+    rpc_url = current_app.config.get('MONAD_RPC_URL') or current_app.config.get('MONAD_RPC') or ''
+    network = {
+        'chainId': hex(chain_id_int),
+        'chainName': current_app.config.get('MONAD_CHAIN_NAME', 'Monad Testnet'),
+        'nativeCurrency': {
+            'name': current_app.config.get('MONAD_NATIVE_NAME', 'Monad'),
+            'symbol': current_app.config.get('MONAD_NATIVE_SYMBOL', 'MON'),
+            'decimals': int(current_app.config.get('MONAD_NATIVE_DECIMALS', 18)),
+        },
+        'rpcUrls': [rpc_url] if rpc_url else [],
+        'blockExplorerUrls': [current_app.config.get('MONAD_EXPLORER_URL', 'https://testnet.monadexplorer.com/')],
+        'blockGasLimit': int(current_app.config.get('MONAD_BLOCK_GAS_LIMIT', 150000000)),
+    }
+
+    return jsonify(network)
