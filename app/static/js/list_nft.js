@@ -46,8 +46,8 @@ async function listNFTOnMarketplace() {
     listButton.disabled = true;
     listButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Listing...';
 
-    const contractAddress = document.getElementById('address').textContent.trim();
-    const tokenId = document.getElementById('id').textContent.trim();
+    const contractAddress = document.getElementById('contract_address').textContent.trim();
+    const tokenId = document.getElementById('token_id').textContent.trim();
     const price = document.getElementById('nftPrice').value.trim();
 
     if (!contractAddress || !tokenId || !price) {
