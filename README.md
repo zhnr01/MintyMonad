@@ -19,6 +19,13 @@ flask run
 ### Frontend config
 Frontend scripts load testnet configuration from `/api/network_config`. Avoid hardcoding RPC or chain parameters in JS.
 
+### API quick checks
+```bash
+curl -s http://localhost:5000/api/network_config | jq
+curl -s http://localhost:5000/api/marketplace_contract_address | jq
+curl -s http://localhost:5000/api/marketplace_abi | jq '.[] | .name?' | head -n 10
+```
+
 
 **NFT Marketplace Contract Address:** `0x02F54869f96E809828d68c3D6D88482d00Aa08ae`
 
