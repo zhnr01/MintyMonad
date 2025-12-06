@@ -69,9 +69,11 @@ async function listNFTOnMarketplace() {
         const signer = await provider.getSigner();
 
         const response = await fetch('/api/marketplace_abi');
+        if (!response.ok) throw new Error('Failed to load marketplace ABI');
         const marketplaceABI = await response.json();
 
         const contract_response = await fetch('/api/marketplace_contract_address');
+        if (!contract_response.ok) throw new Error('Failed to load marketplace address');
         const marketplace_contract_dict = await contract_response.json()
         const marketplace_contract = marketplace_contract_dict['contract_address']
         const marketplaceContract = new ethers.Contract(marketplace_contract, marketplaceABI, signer);
