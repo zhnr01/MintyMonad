@@ -52,6 +52,18 @@ body, p {
     cursor: not-allowed;
 }
 
+/* Badge styling */
+.badge {
+    padding: 0.5em 0.75em;
+    font-weight: 500;
+}
+.badge.bg-secondary {
+    color: #fff;
+}
+.badge.bg-info {
+    color: #053b4c;
+}
+
 /* Layout spacing */
 .container {
     padding-top: 1rem;
