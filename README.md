@@ -2,6 +2,23 @@
 
 A decentralized NFT marketplace built on the Monad blockchain.
 ---
+### Environment variables
+- `SECRET_KEY`: Flask session secret.
+- `ALCHEMY_API_KEY`: Alchemy API key.
+- `NFT_MARKETPLACE_CONTRACT_ADDRESS`: Deployed marketplace contract address.
+- `MONAD_RPC_URL` or `MONAD_RPC`: RPC URL for Monad testnet.
+- Optional overrides:
+	- `MONAD_CHAIN_ID` (default `10143`), `MONAD_CHAIN_NAME`, `MONAD_NATIVE_NAME`, `MONAD_NATIVE_SYMBOL`, `MONAD_NATIVE_DECIMALS`, `MONAD_EXPLORER_URL`, `MONAD_BLOCK_GAS_LIMIT`.
+
+### Run locally
+```bash
+export FLASK_APP=manage.py
+flask run
+```
+
+### Frontend config
+Frontend scripts load testnet configuration from `/api/network_config`. Avoid hardcoding RPC or chain parameters in JS.
+
 
 **NFT Marketplace Contract Address:** `0x02F54869f96E809828d68c3D6D88482d00Aa08ae`
 

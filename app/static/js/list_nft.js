@@ -1,5 +1,46 @@
 import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.8.1/dist/ethers.min.js";
 
+let MONAD_TESTNET = null;
+
+async function loadNetworkConfig() {
+    try {
+        const resp = await fetch('/api/network_config');
+        if (!resp.ok) throw new Error('Failed to fetch network config');
+        const cfg = await resp.json();
+        if (typeof cfg.chainId === 'number') cfg.chainId = '0x' + cfg.chainId.toString(16);
+        MONAD_TESTNET = cfg;
+        return cfg;
+    } catch (err) {
+        console.error('Could not load network config:', err);
+        MONAD_TESTNET = {
+            chainId: '0x279f',
+            chainName: 'Monad Testnet',
+            nativeCurrency: { name: 'Monad', symbol: 'MON', decimals: 18 },
+            rpcUrls: ['https://testnet-rpc.monad.xyz'],
+            blockExplorerUrls: ['https://testnet.monadexplorer.com/'],
+            blockGasLimit: 150000000
+        };
+        return MONAD_TESTNET;
+    }
+}
+
+async function ensureMonadNetwork() {
+    if (!MONAD_TESTNET) await loadNetworkConfig();
+    if (!window.ethereum) throw new Error("Please install MetaMask or a Monad-compatible wallet");
+
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const network = await provider.getNetwork();
+
+    const targetChainId = typeof MONAD_TESTNET.chainId === 'string' ? BigInt(MONAD_TESTNET.chainId) : BigInt(MONAD_TESTNET.chainId);
+    if (network.chainId !== targetChainId) {
+        await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [MONAD_TESTNET]
+        });
+    }
+    return provider;
+}
+
 async function listNFTOnMarketplace() {
     const listButton = document.getElementById('listButton');
     listButton.disabled = true;
@@ -24,7 +65,7 @@ async function listNFTOnMarketplace() {
     }
 
     try {
-        const provider = new ethers.BrowserProvider(window.ethereum);
+        const provider = await ensureMonadNetwork();
         const signer = await provider.getSigner();
 
         const response = await fetch('/api/marketplace_abi');
@@ -75,7 +116,7 @@ async function unlistNFTOnMarketplace(event) {
     }
 
     try {
-        const provider = new ethers.BrowserProvider(window.ethereum);
+        const provider = await ensureMonadNetwork();
         const signer = await provider.getSigner();
 
         const response = await fetch('/api/marketplace_abi');

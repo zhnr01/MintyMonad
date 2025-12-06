@@ -2,6 +2,7 @@ import json
 import os
 from urllib.parse import unquote
 from flask import jsonify, render_template, request, session, url_for, current_app
+import os
 
 from app.model import User
 from . import api
@@ -37,8 +38,8 @@ def wallet_logout():
 @api.route('/marketplace_abi', methods=['GET'])
 def get_marketplace_abi():
     try:
-        ABI_PATH = '/home/byte/Desktop/minty monad/app/static/contract-abi/NFTMarketplace.abi.json'
-        with open(ABI_PATH, 'r') as f:
+        abi_path = os.path.join(current_app.root_path, 'static', 'contract-abi', 'NFTMarketplace.abi.json')
+        with open(abi_path, 'r') as f:
             abi = json.load(f)
         
         return jsonify(abi)
@@ -50,12 +51,13 @@ def get_marketplace_abi():
         return jsonify({'error': 'Invalid ABI file format'}), 500
     
     except Exception as e:
+        current_app.logger.exception('Unexpected error reading marketplace ABI')
         return jsonify({'error': str(e)}), 500
     
 
 @api.route('/marketplace_contract_address')
 def get_marketplace_contract_address():
-    return jsonify({'contract_address':current_app.config.get('NFT_MARKETPLACE_CONTRACT_ADDRESS')})
+    return jsonify({'contract_address': current_app.config.get('NFT_MARKETPLACE_CONTRACT_ADDRESS')})
 
 
 @api.route('/network_config', methods=['GET'])
