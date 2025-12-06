@@ -60,9 +60,9 @@ async function connectWallet() {
                 });
             } catch (switchError) {
                 if (switchError.code === 4902) {
-                    console.error('Monad Testnet not configured in wallet');
+                    console.error('Monad Testnet not configured in wallet (code 4902)');
                 }
-                throw new Error('Failed to switch to Monad Testnet');
+                throw new Error('Failed to add/switch to Monad Testnet');
             }
         }
         const accounts = await provider.send('eth_requestAccounts', []);
