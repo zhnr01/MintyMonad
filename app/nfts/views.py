@@ -104,7 +104,7 @@ def my_nfts():
     headers = {"accept": "application/json"}
 
     try:
-        response = requests.get(current_app.config.get('ALCHEMY_URL'), headers=headers, params=params)
+        response = requests.get(current_app.config.get('ALCHEMY_URL'), headers=headers, params=params, timeout=15)
         response.raise_for_status()
         data = response.json()
 

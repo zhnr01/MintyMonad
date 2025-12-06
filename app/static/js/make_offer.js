@@ -90,6 +90,8 @@ document.addEventListener('click', async function (e) {
         } catch (err) {
             console.error(err);
             alert("Error submitting offer: " + err.message);
+            button.innerHTML = 'Submit Offer';
+            button.disabled = false;
         }
     }
 });

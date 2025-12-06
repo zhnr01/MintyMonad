@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from 'bootstrap4/form.html' import render_form %}
-{% from "_macros.html" import marketplace_nft_row %}
+{% from "_macros.html" import grid_row, marketplace_nft_card %}
 
         {% block title %}
         <title>Marketplace</title>
@@ -9,9 +9,8 @@
 {% block container %}
 <div class="container text-center">
     <h2>ERC-721 NFTs Listing</h2>
-    {% set total = nfts | length %}
-    {% for i in range(0, total, 3) %}
-        {{ marketplace_nft_row(nfts[i:i+3], current_wallet_address) }}
-    {% endfor %}
+    {% call(item) grid_row(nfts) %}
+        {{ marketplace_nft_card(item, current_wallet_address) }}
+    {% endcall %}
 </div>
 {% endblock %} 

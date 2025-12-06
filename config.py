@@ -13,7 +13,8 @@ class Config:
     ALCHEMY_API_KEY = os.environ.get('ALCHEMY_API_KEY')
     ALCHEMY_URL = f"https://monad-testnet.g.alchemy.com/nft/v3/{ALCHEMY_API_KEY}/getNFTsForOwner"
     NFT_MARKETPLACE_CONTRACT_ADDRESS = os.environ.get('NFT_MARKETPLACE_CONTRACT_ADDRESS')
-    MONAD_RPC_URL = os.environ.get('MONAD_RPC')
+    # Prefer MONAD_RPC_URL, fallback to MONAD_RPC for compatibility
+    MONAD_RPC_URL = os.environ.get('MONAD_RPC_URL') or os.environ.get('MONAD_RPC')
 
     @staticmethod
     def init_app(app):
