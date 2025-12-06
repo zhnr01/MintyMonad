@@ -9,3 +9,54 @@
     max-width: 100%;
     display: inline-block;
 }
+
+/* Card polish */
+.card {
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+/* Card images keep aspect without stretching */
+.card-img-top {
+    object-fit: cover;
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
+}
+
+/* Typography tweaks */
+h2, h5 {
+    letter-spacing: 0.2px;
+}
+body, p {
+    line-height: 1.6;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 0.5rem;
+    transition: box-shadow 0.2s ease, transform 0.1s ease;
+}
+.btn:hover {
+    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+}
+.btn:active {
+    transform: translateY(1px);
+}
+.btn[disabled], .btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Layout spacing */
+.container {
+    padding-top: 1rem;
+    padding-bottom: 2rem;
+}
+.row.g-2 > [class^="col"] {
+    margin-bottom: 0.5rem;
+}
