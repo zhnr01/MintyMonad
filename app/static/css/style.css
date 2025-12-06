@@ -4,3 +4,8 @@
 .card-img-top {
     height: 12em;
 }
+
+.badge.text-truncate {
+    max-width: 100%;
+    display: inline-block;
+}
