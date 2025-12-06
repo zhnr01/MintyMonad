@@ -68,6 +68,7 @@ document.addEventListener('click', async function (e) {
             const signer = await provider.getSigner();
 
             const response = await fetch('/api/marketplace_abi');
+            if (!response.ok) throw new Error('Failed to load marketplace ABI');
             const contractAbi = await response.json();
             const contract_response = await fetch('/api/marketplace_contract_address');
             const marketplace_contract_dict = await contract_response.json()
