@@ -10,6 +10,7 @@ from app import db
 
 @api.route('/login', methods=['POST'])
 def wallet_login():
+    """Create or fetch a user by wallet address and start a session."""
     data = request.get_json()
     wallet_address = data.get('wallet_address')
 
@@ -29,6 +30,7 @@ def wallet_login():
 
 @api.route('/logout', methods=['GET'])
 def wallet_logout():
+    """Clear session to log out the current user."""
     # Clear the session data
     session.pop('user_id', None)
     session.pop('wallet_address', None)
@@ -37,6 +39,7 @@ def wallet_logout():
 
 @api.route('/marketplace_abi', methods=['GET'])
 def get_marketplace_abi():
+    """Return the marketplace contract ABI for frontend contract interactions."""
     try:
         abi_path = os.path.join(current_app.root_path, 'static', 'contract-abi', 'NFTMarketplace.abi.json')
         with open(abi_path, 'r') as f:
@@ -57,6 +60,7 @@ def get_marketplace_abi():
 
 @api.route('/marketplace_contract_address')
 def get_marketplace_contract_address():
+    """Return the deployed marketplace contract address from server config."""
     return jsonify({'contract_address': current_app.config.get('NFT_MARKETPLACE_CONTRACT_ADDRESS')})
 
 
