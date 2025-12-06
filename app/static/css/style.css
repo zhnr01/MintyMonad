@@ -72,3 +72,9 @@ body, p {
 .row.g-2 > [class^="col"] {
     margin-bottom: 0.5rem;
 }
+
+/* Subtle focus outline for accessibility */
+:focus-visible {
+    outline: 3px solid rgba(13,110,253,0.4); /* Bootstrap primary tint */
+    outline-offset: 2px;
+}
