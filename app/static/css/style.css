@@ -36,6 +36,11 @@ body, p {
     line-height: 1.6;
 }
 
+/* Section headers */
+.card-header.bg-primary {
+    background: linear-gradient(135deg, #0d6efd 0%, #5a8dfb 100%);
+}
+
 /* Buttons */
 .btn {
     border-radius: 0.5rem;
