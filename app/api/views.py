@@ -58,7 +58,7 @@ def get_marketplace_abi():
         return jsonify({'error': str(e)}), 500
     
 
-@api.route('/marketplace_contract_address')
+@api.route('/marketplace_contract_address', methods=['GET'])
 def get_marketplace_contract_address():
     """Return the deployed marketplace contract address from server config."""
     return jsonify({'contract_address': current_app.config.get('NFT_MARKETPLACE_CONTRACT_ADDRESS')})
