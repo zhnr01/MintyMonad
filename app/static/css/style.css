@@ -1,6 +1,9 @@
 .row {
     margin-bottom: 2em;
 }
+.row:last-child {
+    margin-bottom: 0;
+}
 .card-img-top {
     height: 12em;
 }
