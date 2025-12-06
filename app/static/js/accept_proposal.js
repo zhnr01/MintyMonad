@@ -72,10 +72,10 @@ document.addEventListener('click', async function (e) {
             );
 
             console.log("Transaction sent:", tx.hash);
-            alert(`Offer submitted in MON! TX: ${tx.hash}`);
+            alert(`Proposal accepted. TX: ${tx.hash}`);
 
             await tx.wait();
-            alert(`Offer confirmed on Monad network!`);
+            alert(`Proposal confirmed on Monad network!`);
             button.innerHTML = 'Confirmed'
         } catch (err) {
             console.error(err);
