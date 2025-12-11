@@ -86,3 +86,15 @@ body, p {
     outline: 3px solid rgba(13,110,253,0.4); /* Bootstrap primary tint */
     outline-offset: 2px;
 }
+
+/* Form inputs */
+.form-control:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.25);
+}
+
+/* Link hover */
+a:not(.btn):hover {
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
