@@ -98,3 +98,13 @@ a:not(.btn):hover {
     text-decoration-thickness: 2px;
     text-underline-offset: 3px;
 }
+
+/* Lighter card shadows on small screens */
+@media (max-width: 576px) {
+    .card {
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .card:hover {
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+}
