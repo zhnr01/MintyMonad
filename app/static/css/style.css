@@ -44,6 +44,12 @@ body, p {
     background: linear-gradient(135deg, #0d6efd 0%, #5a8dfb 100%);
 }
 
+/* Navbar link hover */
+.nav-link:hover {
+    color: #0d6efd !important;
+    transition: color 0.15s ease;
+}
+
 /* Buttons */
 .btn {
     border-radius: 0.5rem;
