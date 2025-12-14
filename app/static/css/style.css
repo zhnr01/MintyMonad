@@ -114,3 +114,11 @@ a:not(.btn):hover {
         box-shadow: 0 4px 10px rgba(0,0,0,0.08);
     }
 }
+
+/* Spinner animation */
+.spinner-border {
+    animation: spinner-border 0.65s linear infinite;
+}
+@keyframes spinner-border {
+    to { transform: rotate(360deg); }
+}
