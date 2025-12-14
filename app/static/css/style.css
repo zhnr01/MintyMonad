@@ -129,3 +129,13 @@ a:not(.btn):hover {
     border-color: #198754;
     box-shadow: 0 0 0 0.2rem rgba(25,135,84,0.25);
 }
+
+/* Footer styling */
+footer, .footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    padding: 1.5rem 0;
+    margin-top: 2rem;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
