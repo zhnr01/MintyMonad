@@ -122,3 +122,10 @@ a:not(.btn):hover {
 @keyframes spinner-border {
     to { transform: rotate(360deg); }
 }
+
+/* Price input highlight */
+.input-group .form-control#nftPrice:focus,
+.input-group .form-control#amount:focus {
+    border-color: #198754;
+    box-shadow: 0 0 0 0.2rem rgba(25,135,84,0.25);
+}
