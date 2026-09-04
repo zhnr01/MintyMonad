@@ -28,7 +28,7 @@ class NFT(db.Model):
 
 class Offer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    nft_id = db.Column(db.Integer, db.ForeignKey('nft.id'), nullable=False)  # Note lowercase 'nft'
+    nft_id = db.Column(db.Integer, db.ForeignKey('nft.id'), nullable=False)
     buyer_wallet = db.Column(db.String(42), nullable=False)
     offer_price = db.Column(db.Float, nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

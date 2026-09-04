@@ -1,15 +1,6 @@
-{# Generic reusable helpers to reduce duplication #}
-{% macro image_block(image_url) %}
-    {% if image_url is string and image_url.startswith('<svg') %}
-        <div class="card-img-top" alt="NFT Image">
-            {{ image_url | safe }}
-        </div>
-    {% else %}
-        <img src="{{ image_url }}" class="card-img-top" alt="NFT Image">
-    {% endif %}
+{% macro image_block(image_url, alt_text='NFT image') %}
+    <img src="{{ image_url }}" class="card-img-top" alt="{{ alt_text }}" loading="lazy">
 {% endmacro %}
-
-{# Grid row macro with caller for flexible item rendering #}
 {% macro grid_row(items) %}
 <div class="row">
     {% for item in items %}
@@ -43,13 +34,13 @@
 
 {% macro nft_card(nft) %}
 <div class="card d-flex flex-column" style="width: 18rem;">
-    {{ image_block(nft.image_url) }}
+    {{ image_block(nft.image_url, nft.name or nft.symbol ~ ' NFT') }}
     <div class="card-body flex-grow-1 d-flex flex-column">
         <h5 class="card-title">{{ nft.name }}</h5>
         <p class="card-text mb-3">
             <strong>Symbol:</strong> {{ nft.symbol }}<br>
-            <strong id="contract_address">Contract:</strong> {{ nft.contract_address }}<br>
-            <strong id="token_id">Token ID:</strong> {{ nft.token_id }}
+            <strong>Contract:</strong> {{ nft.contract_address }}<br>
+            <strong>Token ID:</strong> {{ nft.token_id }}
         </p>
         {% if nft.listed %}
             <small class="text-success mb-2">This NFT is listed on the marketplace.</small>
@@ -70,13 +61,13 @@
 
 {% macro marketplace_nft_card(nft, current_wallet_address=None) %}
 <div class="card" style="width: 18rem;">
-    {{ image_block(nft.image_url) }}
+    {{ image_block(nft.image_url, nft.name or nft.symbol ~ ' NFT') }}
     <div class="card-body">
         <p class="card-text">
             <strong>Symbol:</strong> {{ nft.symbol }}<br>
-            <strong id="contract_address">Contract:</strong> {{ nft.contract_address }}<br>
-            <strong id="contract_owner">Owner:</strong> {{ nft.owner }}<br>
-            <strong id="token_id">Token ID:</strong> {{ nft.token_id }}<br>
+            <strong>Contract:</strong> {{ nft.contract_address }}<br>
+            <strong>Owner:</strong> {{ nft.owner }}<br>
+            <strong>Token ID:</strong> {{ nft.token_id }}<br>
             <strong>Price: </strong> {{ nft.price }} $MON
         </p>
         <a href="/nfts/view-proposals/{{ nft.contract_address | urlencode }}/{{ nft.token_id | urlencode }}" class="btn btn-secondary viewProposalsBtn">View proposals</a>

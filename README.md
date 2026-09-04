@@ -1,121 +1,95 @@
 # MintyMonad
 
-A decentralized NFT marketplace built on the Monad blockchain.
----
-### Environment variables
-- `SECRET_KEY`: Flask session secret.
-- `ALCHEMY_API_KEY`: Alchemy API key.
-- `NFT_MARKETPLACE_CONTRACT_ADDRESS`: Deployed marketplace contract address.
-- `MONAD_RPC_URL` or `MONAD_RPC`: RPC URL for Monad testnet.
-- Optional overrides:
-	- `MONAD_CHAIN_ID` (default `10143`), `MONAD_CHAIN_NAME`, `MONAD_NATIVE_NAME`, `MONAD_NATIVE_SYMBOL`, `MONAD_NATIVE_DECIMALS`, `MONAD_EXPLORER_URL`, `MONAD_BLOCK_GAS_LIMIT`.
+MintyMonad is a Flask web application and Vyper smart contract for listing, buying, and making offers on ERC-721 NFTs on Monad Testnet. Wallet authentication uses a server-issued nonce and an EIP-191 signature; transaction execution remains in the user's wallet.
 
-### Run locally
-```bash
-export FLASK_APP=manage.py
-flask run
-```
+## Scope
 
-### Frontend config
-Frontend scripts load testnet configuration from `/api/network_config`. Avoid hardcoding RPC or chain parameters in JS.
+- ERC-721 listing and unlisting
+- Native MON purchases and offers
+- Proposal acceptance, cancellation, and refunds
+- Wallet-based authentication
+- Monad network and contract metadata APIs
 
-### API quick checks
-```bash
-curl -s http://localhost:5000/api/network_config | jq
-curl -s http://localhost:5000/api/marketplace_contract_address | jq
-curl -s http://localhost:5000/api/marketplace_abi | jq '.[] | .name?' | head -n 10
-```
+## Architecture
 
+The Flask application serves Jinja templates and static JavaScript. The backend reads marketplace state from the Monad RPC and NFT ownership/metadata from Alchemy and token URIs. The browser wallet signs authentication messages and submits marketplace transactions directly to the contract. SQLite stores the wallet identity used by the web session; blockchain state remains authoritative for NFTs, listings, and offers.
 
-**NFT Marketplace Contract Address:** `0x02F54869f96E809828d68c3D6D88482d00Aa08ae`
+## Requirements
 
-## Features
+- Python 3.11 recommended
+- `uv`
+- A browser wallet such as MetaMask
+- Monad Testnet RPC access
+- An Alchemy NFT API key
+- A deployed `NFTMarketplace` contract
 
-* **NFT Listings**: List ERC721 NFTs with a fixed price.
-* **Buy NFTs**: Purchase listed NFTs using MON (native token).
-* **Proposals/Offers**: Make offers on NFTs which are held in the contract until accepted or canceled.
-* **Accept Proposals**: Sellers can accept a proposal; NFT is transferred to the buyer and funds are sent to the seller.
-* **Automatic Refunds**: All other proposers are refunded when a proposal is accepted.
-* **Cancel Proposals**: Users can cancel their proposals to get their funds back.
-* **Admin Functions**: Set marketplace fees and withdraw collected fees.
-* **Web Interface**: User-friendly interface built with Bootstrap and JavaScript.
+## Configuration
 
----
+Create `.env` locally. Never commit it.
 
-## Tech Stack
-
-* **Smart Contract**: Vyper 0.3.10
-* **Blockchain**: Monad Testnet
-* **Backend**: Python Flask
-* **Frontend**: JavaScript + Bootstrap
-* **Wallet Interaction**: ether.js
-
-
----
-
-## Setup & Installation
-
-1. **Clone the repository**:
-
-```bash
-git https://github.com/zhnr01/MintyMonad
-cd MintyMonad
-```
-
-2. **Install Python dependencies**:
-
-```bash
-python3 -m venv env
-source env/bin/activate
-pip install -r requirements.txt
-```
-
-3. **Configure `.env`**:
-
-```python
-PRIVATE_KEY=
-ACCOUNT_ADDRESS=
-MONAD_RPC=https://testnet-rpc.monad.xyz
+```dotenv
+SECRET_KEY=replace-with-a-random-value
 ALCHEMY_API_KEY=
-SECRET_KEY=
 NFT_MARKETPLACE_CONTRACT_ADDRESS=
+MONAD_RPC_URL=https://testnet-rpc.monad.xyz
+MONAD_CHAIN_ID=10143
+MONAD_CHAIN_NAME=Monad Testnet
+MONAD_NATIVE_NAME=Monad
+MONAD_NATIVE_SYMBOL=MON
+MONAD_NATIVE_DECIMALS=18
+MONAD_EXPLORER_URL=https://testnet.monadexplorer.com/
+MONAD_BLOCK_GAS_LIMIT=150000000
 ```
 
-4. **Run deploy.py to deploy contract**:
+Windows PowerShell users can create `.env` from `.env.example` in an editor, or use `Copy-Item .env.example .env` before filling in local values.
+
+Deployment-only scripts additionally require `PRIVATE_KEY` and `ACCOUNT_ADDRESS`. Keep these out of source control and run those scripts only against an intended network.
+
+Production requires `SECRET_KEY`, `DATABASE_URL`, `MONAD_RPC_URL`, `ALCHEMY_API_KEY`, and `NFT_MARKETPLACE_CONTRACT_ADDRESS`. The container entrypoint is `wsgi:app` under Gunicorn.
+
+## Run locally
 
 ```bash
-python deploy.py
+uv venv .venv
+uv pip install --python .venv/Scripts/python.exe -r requirements.txt
+.venv/Scripts/python.exe create_db.py
+.venv/Scripts/python.exe manage.py
 ```
-**Run create_db.py to create database**
+
+Open http://127.0.0.1:5050.
+
+## Container run
+
 ```bash
-python create_db.py
+docker compose up --build -d
+curl http://127.0.0.1:5050/healthz
+curl http://127.0.0.1:5050/readyz
 ```
 
-**Run manage.py**
+See `OPERATIONS.md` for shutdown and rollback guidance.
+
+The container entrypoint applies committed migrations before starting Gunicorn. The mounted `minty-data` volume persists the SQLite demo database; use a managed database for production traffic.
+
+## Verification
+
 ```bash
-python manage.py
+uv run --python 3.11 --with Flask==3.1.1 --with Flask-SQLAlchemy==3.1.1 --with web3==7.13.0 --with python-dotenv==1.1.1 --with eth-account==0.13.7 pytest -q
+python -m compileall -q app config.py create_db.py deploy.py manage.py withdrawfee.py
+uvx --python 3.11 --from vyper==0.4.3 vyper contracts/NFTMarketplace.vy
 ```
 
-5. Open `http://127.0.0.1:5000` in your browser.
+## API smoke checks
 
----
+```bash
+curl -s http://127.0.0.1:5050/api/network_config
+curl -s http://127.0.0.1:5050/api/marketplace_abi
+curl -s http://127.0.0.1:5050/api/marketplace_contract_address
+```
 
-## Usage
-* **Main Page**: Connect your wallet on the main page.
-![Main Page](assets/main.png)
-* **List an NFT**: Approve the marketplace contract, and set a price.
-![List an NFT](assets/myNftsPage.png)
-![Approve page](assets/Approve_List.png)
-* **Make a Proposal**: Submit an offer for an NFT. Your MON is held in the contract.
-![Make a Proposal](assets/makeAnoffer.png)
-* **Accept Proposal**: As the seller, accept a proposal to transfer the NFT and receive funds. 
-Other proposers are refunded automatically.
-![Accept Proposal](assets/AcceptProposal.png)
-* **Cancel Proposal**: Cancel your proposal to get your funds back.
-![Cancel Proposal](assets/cancelProposal.png)
-* **Unlist NFT**: Click *Unlist* button to unlist it from marketplace.
-* **View Proposals**: Click *View Proposals* button to view proposals.
-![View Proposals](assets/marketplacePage.png)
----
-## Notes
-* This project is **not production ready** — use only for testing or development.
+## Security and limitations
+
+This is a testnet portfolio project, not a production financial application. The contract is not independently audited and has no upgrade mechanism. The backend does not custody funds or submit marketplace transactions. RPC and metadata providers are external dependencies. Production hardening still required includes rate limiting, CSRF protection for backend state changes, structured monitoring, database migrations, a production server configuration, and a formal smart-contract audit.
+
+## License
+
+MIT. See `LICENSE`.

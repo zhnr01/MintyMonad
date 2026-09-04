@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% from 'bootstrap4/form.html' import render_form %}
 {% import '_macros.html' as macros %}
 
 {% block title %}
@@ -45,7 +44,7 @@
       <div id="priceHelp" class="form-text mb-3">Enter the listing price in MON.</div>
 
       <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-        <a href="{{ url_for('nfts.views.my_nfts') if false }}" class="btn btn-outline-secondary me-md-2" role="button">
+        <a href="{{ url_for('nfts.my_nfts') }}" class="btn btn-outline-secondary me-md-2" role="button">
           <i class="bi bi-x-circle"></i> Cancel
         </a>
         <button type="button" id="approve" class="btn btn-primary">
@@ -61,4 +60,8 @@
     You'll need to approve this NFT for sale first.
   </div>
 </div>
+{% endblock %}
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/approve_nft.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/list_nft.js') }}"></script>
 {% endblock %}

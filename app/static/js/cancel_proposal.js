@@ -43,10 +43,11 @@ async function ensureMonadNetwork() {
 }
 
 document.addEventListener('click', async function (e) {
-    if (e.target.classList.contains('cancelProposal')) {
+    const button = e.target.closest('.cancelProposal');
+    if (button) {
         e.preventDefault();
 
-        const button = e.target;
+
         button.disabled = true;
         button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cancelling...'
         const contractAddress = button.getAttribute('data-contract');

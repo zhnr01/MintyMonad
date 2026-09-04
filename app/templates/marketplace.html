@@ -1,16 +1,18 @@
 {% extends "base.html" %}
-{% from 'bootstrap4/form.html' import render_form %}
 {% from "_macros.html" import grid_row, marketplace_nft_card %}
 
-        {% block title %}
-        <title>Marketplace</title>
-        {% endblock %}
+{% block title %}
+<title>Marketplace</title>
+{% endblock %}
 
 {% block container %}
 <div class="container text-center">
-    <h2>ERC-721 NFTs Listing</h2>
+    <h2>ERC-721 NFT listings</h2>
     {% call(item) grid_row(nfts) %}
         {{ marketplace_nft_card(item, current_wallet_address) }}
     {% endcall %}
 </div>
-{% endblock %} 
+{% endblock %}
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/list_nft.js') }}"></script>
+{% endblock %}

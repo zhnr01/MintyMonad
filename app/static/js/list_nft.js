@@ -28,15 +28,18 @@ async function ensureMonadNetwork() {
     if (!MONAD_TESTNET) await loadNetworkConfig();
     if (!window.ethereum) throw new Error("Please install MetaMask or a Monad-compatible wallet");
 
-    const provider = new ethers.BrowserProvider(window.ethereum);
+    let provider = new ethers.BrowserProvider(window.ethereum);
     const network = await provider.getNetwork();
 
     const targetChainId = typeof MONAD_TESTNET.chainId === 'string' ? BigInt(MONAD_TESTNET.chainId) : BigInt(MONAD_TESTNET.chainId);
     if (network.chainId !== targetChainId) {
-        await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [MONAD_TESTNET]
-        });
+        try {
+            await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: MONAD_TESTNET.chainId }] });
+        } catch (error) {
+            if (error.code !== 4902) throw error;
+            await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [MONAD_TESTNET] });
+        }
+        provider = new ethers.BrowserProvider(window.ethereum);
     }
     return provider;
 }
@@ -145,9 +148,11 @@ async function unlistNFTOnMarketplace(event) {
 }
 
 document.addEventListener('click', function(event) {
-  if (event.target.classList.contains('unlistBtn')) {
-    unlistNFTOnMarketplace(event);
-  } else if (event.target.id === 'listButton') {
-    listNFTOnMarketplace(event);
+  const target = event.target.closest('button');
+  if (!target) return;
+  if (target.classList.contains('unlistBtn')) {
+    unlistNFTOnMarketplace({ target });
+  } else if (target.id === 'listButton') {
+    listNFTOnMarketplace({ target });
   }
 });

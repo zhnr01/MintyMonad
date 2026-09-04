@@ -1,4 +1,3 @@
-import base64
 import json
 import os
 from flask import jsonify, render_template, current_app, request, session, url_for
@@ -6,6 +5,8 @@ from . import nfts
 from urllib.parse import unquote
 import requests
 from web3 import Web3
+from app.decorators import login_required
+from .metadata import load_token_metadata, normalize_ipfs_url
 
 
 def _abi_path() -> str:
@@ -14,14 +15,15 @@ def _abi_path() -> str:
 
 def _get_w3() -> Web3:
     rpc_url = current_app.config.get('MONAD_RPC_URL')
-    return Web3(Web3.HTTPProvider(rpc_url))
+    return Web3(Web3.HTTPProvider(rpc_url, request_kwargs={'timeout': 10}))
 
 
 def _get_marketplace_contract(w3: Web3 = None):
     w3 = w3 or _get_w3()
-    marketplace_address = Web3.to_checksum_address(
-        current_app.config.get('NFT_MARKETPLACE_CONTRACT_ADDRESS')
-    )
+    configured_address = current_app.config.get('NFT_MARKETPLACE_CONTRACT_ADDRESS')
+    if not configured_address or not Web3.is_address(configured_address):
+        raise RuntimeError('Marketplace contract is not configured')
+    marketplace_address = Web3.to_checksum_address(configured_address)
     with open(_abi_path()) as f:
         marketplace_abi = json.load(f)
     return w3.eth.contract(address=marketplace_address, abi=marketplace_abi)
@@ -53,44 +55,21 @@ def _erc721_abi():
     ]
 
 
-def _normalize_ipfs(url: str) -> str:
-    if not isinstance(url, str):
-        return url
-    if url.startswith("ipfs://"):
-        return url.replace("ipfs://", "https://ipfs.io/ipfs/")
-    return url
-
-
-def _load_token_metadata(token_uri: str) -> dict:
-    token_uri = _normalize_ipfs(token_uri)
-    if not token_uri:
-        return {}
-    try:
-        if token_uri.startswith("data:"):
-            base64_data = token_uri.split(",", 1)[1]
-            decoded_json = base64.b64decode(base64_data).decode("utf-8")
-            return json.loads(decoded_json)
-        resp = requests.get(token_uri, timeout=15)
-        resp.raise_for_status()
-        return resp.json()
-    except Exception:
-        current_app.logger.exception("Failed to load token metadata from %s", token_uri)
-        return {}
-
-
 def _image_from_metadata(metadata: dict) -> str:
     image_url = metadata.get("image") if isinstance(metadata, dict) else None
-    image_url = _normalize_ipfs(image_url) if image_url else None
+    image_url = normalize_ipfs_url(image_url) if image_url else None
     return image_url or url_for('static', filename='images/dummy.png')
 
 
 @nfts.route('/list', methods=['GET'])
+@login_required
 def list_nft():
     contract_address = unquote(request.args.get('contract_address', ''))
     token_id = unquote(request.args.get('token_id', ''))
     return render_template('list_nft.html', contract_address=contract_address, token_id=token_id)
 
 @nfts.route("/mine", methods=["GET"])
+@login_required
 def my_nfts():
     wallet_address = session.get('wallet_address')
     if not wallet_address:
@@ -112,10 +91,11 @@ def my_nfts():
         for nft in data.get("ownedNfts", []):
             if nft["tokenType"] != "ERC721":
                 continue
+            contract = nft.get('contract') or {}
             owned_nfts.append({
-                "name": nft['contract']['name'],
-                "symbol": nft['contract']['symbol'],
-                "contract_address": nft['contract']['address'].lower(),
+                "name": contract.get('name') or 'Unnamed NFT',
+                "symbol": contract.get('symbol') or 'Unknown',
+                "contract_address": contract.get('address', '').lower(),
                 "image_url": nft.get('image', {}).get('thumbnailUrl') or url_for('static', filename='images/dummy.png'),
                 "token_id": nft['tokenId']
             })
@@ -135,12 +115,12 @@ def my_nfts():
 
         return render_template('my-nfts.html', nfts=owned_nfts)
 
-    except requests.exceptions.RequestException as e:
+    except requests.exceptions.RequestException:
         current_app.logger.exception("Failed to fetch owned NFTs from Alchemy")
-        return jsonify({"error": str(e)}), 500
-    except Exception as e:
+        return jsonify({"error": "Unable to fetch owned NFTs"}), 502
+    except Exception:
         current_app.logger.exception("Unexpected error in my_nfts")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Unable to load owned NFTs"}), 502
 
 
 @nfts.route('/marketplace-data', methods=['GET'])
@@ -165,7 +145,7 @@ def marketplace_data():
 
             try:
                 token_uri = nft_contract.functions.tokenURI(token_id).call()
-                metadata = _load_token_metadata(token_uri)
+                metadata = load_token_metadata(token_uri)
                 image_url = _image_from_metadata(metadata)
             except Exception:
                 current_app.logger.exception("Error fetching metadata for token %s", token_id)
@@ -187,11 +167,12 @@ def marketplace_data():
 
         return render_template('marketplace.html', nfts=results, current_wallet_address=session.get('wallet_address'))
 
-    except Exception as e:
+    except Exception:
         current_app.logger.exception("Unexpected error in marketplace_data")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Unable to load marketplace data"}), 502
 
 @nfts.route('/view-proposals/<contract_address>/<token_id>')
+@login_required
 def view_proposals(contract_address, token_id):
     w3 = _get_w3()
     marketplace_contract = _get_marketplace_contract(w3)
@@ -222,6 +203,7 @@ def view_proposals(contract_address, token_id):
 
 
 @nfts.route('/make_offer/<contract_address>/<token_id>')
+@login_required
 def make_offer(contract_address, token_id):
     contract_address = unquote(contract_address)
     token_id = unquote(token_id)

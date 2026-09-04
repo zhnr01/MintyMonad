@@ -5,7 +5,6 @@ const contract_response = await fetch('/api/marketplace_contract_address');
 const marketplace_contract_dict = await contract_response.json();
 const MARKETPLACE_ADDRESS = marketplace_contract_dict['contract_address']
 
-// ERC-721 minimal ABI for approval + interface check
 const ERC721_ABI = [
     "function approve(address to, uint256 tokenId) external",
     "function supportsInterface(bytes4 interfaceId) external view returns (bool)"
@@ -13,9 +12,8 @@ const ERC721_ABI = [
 
 async function approveNFTFromWallet() {
     try {
-        // Get NFT details from the page
-        const nftContractAddress = document.getElementById('address').textContent.trim();
-        const tokenId = document.getElementById('id').textContent.trim();
+        const nftContractAddress = document.getElementById('contract_address').textContent.trim();
+        const tokenId = document.getElementById('token_id').textContent.trim();
 
         if (!window.ethereum) {
             throw new Error("Please connect a wallet");
@@ -44,13 +42,14 @@ async function approveNFTFromWallet() {
         const tx = await nftContract.approve(MARKETPLACE_ADDRESS, tokenId);
         console.log("Transaction sent:", tx.hash);
 
-        // Add link to explorer
-        const txLink = document.createElement('span');
-        txLink.innerHTML = `<a href='https://testnet.monadexplorer.com/tx/${tx.hash}' target="_blank">View on Explorer</a>`;
-        document.getElementsByClassName('card-footer')[0].innerHTML = '';
-        document.getElementsByClassName('card-footer')[0].append(txLink);
+        const txLink = document.createElement('a');
+        txLink.href = `https://testnet.monadexplorer.com/tx/${tx.hash}`;
+        txLink.target = '_blank';
+        txLink.rel = 'noopener noreferrer';
+        txLink.textContent = 'View on Explorer';
+        const footer = document.querySelector('.card-footer');
+        if (footer) footer.replaceChildren(txLink);
 
-        // Wait for confirmation
         const receipt = await tx.wait();
         console.log("Approval confirmed in block:", receipt.blockNumber);
 
@@ -71,17 +70,21 @@ async function approveNFTFromWallet() {
     }
 }
 
-// Event listener with loading state
 const approveBtn = document.getElementById('approve');
-approveBtn.addEventListener('click', async function () {
+if (approveBtn) approveBtn.addEventListener('click', async function () {
     try {
         approveBtn.disabled = true;
         approveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Approving...';
 
         await approveNFTFromWallet();
 
+    } catch {
+        approveBtn.disabled = false;
+        approveBtn.textContent = 'Approve Listing';
     } finally {
+        if (!approveBtn.disabled) return;
         approveBtn.textContent = 'Approved';
-        document.getElementById('listButton').style.display = 'block';
+        const listButton = document.getElementById('listButton');
+        if (listButton) listButton.hidden = false;
     }
 });

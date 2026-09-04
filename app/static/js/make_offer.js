@@ -47,8 +47,6 @@ document.addEventListener('click', async function (e) {
         e.preventDefault();
 
         const button = e.target;
-        button.disabled = true;
-        button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...'
         const contractAddress = button.getAttribute('data-contract');
         const tokenId = button.getAttribute('data-tokenid');
 
@@ -57,6 +55,8 @@ document.addEventListener('click', async function (e) {
             alert('Please enter a price.');
             return;
         }
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...'
 
         const proposedPriceNative = priceInput.value;
         const proposedPriceWei = ethers.parseEther(proposedPriceNative);

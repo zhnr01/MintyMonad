@@ -3,6 +3,12 @@ import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.8.1/dist/ethers.mi
 const walletConnectBtn = document.getElementById('walletConnectBtn');
 const walletDisconnectBtn = document.getElementById('walletDisconnectBtn');
 
+if (walletConnectBtn && walletDisconnectBtn) {
+    const connected = walletConnectBtn.dataset.connected === 'true';
+    walletConnectBtn.hidden = connected;
+    walletDisconnectBtn.hidden = !connected;
+}
+
 let MONAD_TESTNET = null;
 
 async function loadNetworkConfig() {
@@ -34,17 +40,10 @@ async function connectWallet() {
         alert('Please install MetaMask or another Ethereum wallet extension!');
         return;
     }
-    // Ensure network configuration is loaded from backend
     if (!MONAD_TESTNET) await loadNetworkConfig();
 
     try {
-        // First, explicitly request permissions to trigger the popup every time
-        await window.ethereum.request({
-            method: 'wallet_requestPermissions',
-            params: [{ eth_accounts: {} }],
-        });
-
-        const provider = new ethers.BrowserProvider(window.ethereum);
+        let provider = new ethers.BrowserProvider(window.ethereum);
 
         // Check current network
         const currentNetwork = await provider.getNetwork();
@@ -54,16 +53,12 @@ async function connectWallet() {
         const targetChainId = typeof MONAD_TESTNET.chainId === 'string' ? BigInt(MONAD_TESTNET.chainId) : BigInt(MONAD_TESTNET.chainId);
         if (currentNetwork.chainId !== targetChainId) {
             try {
-                await window.ethereum.request({
-                    method: 'wallet_addEthereumChain',
-                    params: [MONAD_TESTNET]
-                });
-            } catch (switchError) {
-                if (switchError.code === 4902) {
-                    console.error('Monad Testnet not configured in wallet (code 4902)');
-                }
-                throw new Error('Failed to add/switch to Monad Testnet');
+                await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: MONAD_TESTNET.chainId }] });
+            } catch (error) {
+                if (error.code !== 4902) throw error;
+                await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [MONAD_TESTNET] });
             }
+            provider = new ethers.BrowserProvider(window.ethereum);
         }
         const accounts = await provider.send('eth_requestAccounts', []);
 
@@ -78,12 +73,26 @@ async function connectWallet() {
         walletConnectBtn.textContent = `Connected: ${truncatedAddress}`;
         walletConnectBtn.disabled = true;
 
+        const csrfResponse = await fetch('/api/csrf-token');
+        if (!csrfResponse.ok) throw new Error('Could not start secure wallet verification');
+        const { csrf_token } = await csrfResponse.json();
+        const nonceResponse = await fetch('/api/nonce', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf_token },
+            body: JSON.stringify({ wallet_address: walletAddress }),
+        });
+        if (!nonceResponse.ok) throw new Error('Could not start wallet verification');
+        const { nonce } = await nonceResponse.json();
+        const signature = await signer.signMessage(nonce);
+
         const response = await fetch('/api/login', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf_token },
             body: JSON.stringify({
                 wallet_address: walletAddress,
-                network: 'monad-testnet'
+                network: 'monad-testnet',
+                signature,
+                nonce,
             }),
         });
 
@@ -105,7 +114,12 @@ async function connectWallet() {
 }
 
 function disconnectWallet() {
-    fetch('/api/logout')
+    fetch('/api/csrf-token')
+        .then(response => response.json())
+        .then(({ csrf_token }) => fetch('/api/logout', {
+            method: 'POST',
+            headers: { 'X-CSRF-Token': csrf_token },
+        }))
         .then(response => {
             if (!response.ok) throw new Error('Network response was not ok');
             return response.json();
@@ -120,5 +134,5 @@ function disconnectWallet() {
         });
 }
 
-walletConnectBtn.addEventListener('click', connectWallet);
-walletDisconnectBtn.addEventListener('click', disconnectWallet);
+if (walletConnectBtn) walletConnectBtn.addEventListener('click', connectWallet);
+if (walletDisconnectBtn) walletDisconnectBtn.addEventListener('click', disconnectWallet);

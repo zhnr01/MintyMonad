@@ -3,21 +3,8 @@
 
 {% block walletConnectBtn %}
 
-<button class="btn btn-success" id="walletConnectBtn">Connect Wallet</button>
-<button class="btn btn-danger" id="walletDisconnectBtn"></button>
-{% if current_user and current_user.wallet_address %}
-<script>
-    document.getElementById('walletConnectBtn').style.display = 'none';
-    document.getElementById('walletDisconnectBtn').textContent = "Disconnect: {{ current_user.wallet_address[:6] }}...{{ current_user.wallet_address[-4:] }}";
-    document.getElementById('walletDisconnectBtn').style.display = 'block';
-</script>
-{% else %}
-<script>
-    document.getElementById('walletDisconnectBtn').style.display = 'none';
-    document.getElementById('walletDisconnectBtn').textContent = '';
-    document.getElementById('walletConnectBtn').style.display = 'block';
-</script>
-{% endif %}
+<button class="btn btn-success" id="walletConnectBtn" data-connected="{{ 'true' if current_user else 'false' }}">Connect Wallet</button>
+<button class="btn btn-danger" id="walletDisconnectBtn" type="button" aria-label="Disconnect wallet" data-connected="{{ 'true' if current_user else 'false' }}">Disconnect wallet</button>
 {% endblock %}
 {% block container %}
 <div class="container py-5">

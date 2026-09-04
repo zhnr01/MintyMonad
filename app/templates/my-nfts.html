@@ -1,14 +1,18 @@
 {% extends "base.html" %}
 {% from "_macros.html" import nft_row %}
-        {% block title %}
-        <title>My NFTs</title>
-        {% endblock %}
+
+{% block title %}
+<title>My NFTs</title>
+{% endblock %}
 {% block container %}
 <div class="container text-center">
-    <h2>ERC-721 NFTs you Own</h2>
+    <h2>ERC-721 NFTs you own</h2>
     {% set total = nfts | length %}
     {% for i in range(0, total, 3) %}
         {{ nft_row(nfts[i:i+3]) }}
     {% endfor %}
 </div>
+{% endblock %}
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/list_nft.js') }}"></script>
 {% endblock %}

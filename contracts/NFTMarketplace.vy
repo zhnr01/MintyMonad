@@ -59,15 +59,16 @@ listedTokenIds: DynArray[uint256, 10000]
 listedCount: uint256
 
 # Proposal tracking
-proposalAddresses: HashMap[address, HashMap[uint256, DynArray[address, 1000]]]
+proposalAddresses: HashMap[address, HashMap[uint256, DynArray[address, 100]]]
 proposalCount: HashMap[address, HashMap[uint256, uint256]]
 
 # Marketplace settings
 owner: public(address)
 fee_bps: public(uint256)
 collected_fees: public(uint256)
+pending_withdrawals: public(HashMap[address, uint256])
 
-MAX_PROPOSALS: constant(uint256) = 1000
+MAX_PROPOSALS: constant(uint256) = 100
 
 # -------- Constructor --------
 @deploy
@@ -93,6 +94,10 @@ def _take_fee(amount: uint256) -> uint256:
     fee: uint256 = amount * self.fee_bps // 10000
     self.collected_fees += fee
     return amount - fee
+
+@internal
+def _credit(recipient: address, amount: uint256):
+    self.pending_withdrawals[recipient] += amount
 
 @internal
 def _remove_listing(nftAddress: address, tokenId: uint256):
@@ -128,6 +133,8 @@ def _remove_proposal(nftAddress: address, tokenId: uint256, proposer: address):
 def setNFTPrice(nftAddress: address, tokenId: uint256, price: uint256):
     nftContract: ERC721_Interface = ERC721_Interface(nftAddress)
     assert staticcall nftContract.ownerOf(tokenId) == msg.sender, "Only owner can list"
+    assert price > 0, "Price must be positive"
+    assert self.prices[nftAddress][tokenId] == 0, "NFT already listed"
     self.prices[nftAddress][tokenId] = price
     self.listedNFTs.append(nftAddress)
     self.listedTokenIds.append(tokenId)
@@ -152,8 +159,8 @@ def unlistNFT(nftAddress: address, tokenId: uint256):
             amount: uint256 = self.proposals[nftAddress][tokenId][proposer]
             if amount > 0:
                 self.proposals[nftAddress][tokenId][proposer] = 0
-                send(proposer, amount)
-                log ProposalCancelled(proposer=proposer, nftAddress=nftAddress, tokenId=tokenId)  # optional: track refunds
+                self._credit(proposer, amount)
+                log ProposalCancelled(proposer=proposer, nftAddress=nftAddress, tokenId=tokenId)
 
         # Clear proposal tracking
         self.proposalAddresses[nftAddress][tokenId] = []
@@ -182,10 +189,10 @@ def buyNFT(nftAddress: address, tokenId: uint256):
 
     seller_amount: uint256 = self._take_fee(price)
     extcall nftContract.transferFrom(seller, buyer, tokenId)
-    send(seller, seller_amount)
+    self._credit(seller, seller_amount)
 
     if msg.value > price:
-        send(buyer, msg.value - price)
+        self._credit(buyer, msg.value - price)
 
     self.prices[nftAddress][tokenId] = 0
     self._remove_listing(nftAddress, tokenId)
@@ -196,6 +203,8 @@ def buyNFT(nftAddress: address, tokenId: uint256):
 @payable
 def proposeNFTPrice(nftAddress: address, tokenId: uint256, proposedPrice: uint256):
     assert msg.value == proposedPrice, "ETH != proposedPrice"
+    assert proposedPrice > 0, "Proposal must be positive"
+    assert self.proposals[nftAddress][tokenId][msg.sender] == 0, "Proposal already exists"
     self.proposals[nftAddress][tokenId][msg.sender] = proposedPrice
     self.proposalAddresses[nftAddress][tokenId].append(msg.sender)
     self.proposalCount[nftAddress][tokenId] += 1
@@ -207,7 +216,7 @@ def cancelProposalNFTPrice(nftAddress: address, tokenId: uint256):
     proposedPrice: uint256 = self.proposals[nftAddress][tokenId][msg.sender]
     assert proposedPrice > 0, "No proposal"
     self.proposals[nftAddress][tokenId][msg.sender] = 0
-    send(msg.sender, proposedPrice)
+    self._credit(msg.sender, proposedPrice)
     self._remove_proposal(nftAddress, tokenId, msg.sender)
     log ProposalCancelled(proposer=msg.sender, nftAddress=nftAddress, tokenId=tokenId)
 
@@ -227,7 +236,7 @@ def acceptNFTProposal(nftAddress: address, tokenId: uint256, buyer: address):
 
     # Send seller's amount after fee
     seller_amount: uint256 = self._take_fee(proposed)
-    send(seller, seller_amount)
+    self._credit(seller, seller_amount)
 
     # Refund all other proposers
     all_proposers: DynArray[address, MAX_PROPOSALS] = self.proposalAddresses[nftAddress][tokenId]
@@ -241,11 +250,12 @@ def acceptNFTProposal(nftAddress: address, tokenId: uint256, buyer: address):
             amount: uint256 = self.proposals[nftAddress][tokenId][p]
             if amount > 0:
                 self.proposals[nftAddress][tokenId][p] = 0
-                send(p, amount)
+                self._credit(p, amount)
 
-    # Clear accepted proposal and remove buyer from proposal list
+    # Clear accepted proposal and remove all proposal tracking
     self.proposals[nftAddress][tokenId][buyer] = 0
-    self._remove_proposal(nftAddress, tokenId, buyer)
+    self.proposalAddresses[nftAddress][tokenId] = []
+    self.proposalCount[nftAddress][tokenId] = 0
 
     # Remove NFT listing
     self.prices[nftAddress][tokenId] = 0
@@ -260,8 +270,16 @@ def withdrawFees(to: address):
     amount: uint256 = self.collected_fees
     assert amount > 0, "No fees"
     self.collected_fees = 0
-    send(to, amount)
+    self._credit(to, amount)
     log Withdraw(to=to, amount=amount)
+
+@external
+@nonreentrant
+def withdrawFunds():
+    amount: uint256 = self.pending_withdrawals[msg.sender]
+    assert amount > 0, "No funds"
+    self.pending_withdrawals[msg.sender] = 0
+    send(msg.sender, amount)
 
 @external
 def setFeeBps(new_bps: uint256):
@@ -287,9 +305,9 @@ def getAllListedNFTs() -> (DynArray[address, 10000], DynArray[uint256, 10000]):
 
 @view
 @external
-def getProposalsForNFT(nftAddress: address, tokenId: uint256) -> (DynArray[address, 1000], DynArray[uint256, 1000]):
-    proposers: DynArray[address, 1000] = self.proposalAddresses[nftAddress][tokenId]
-    prices: DynArray[uint256, 1000] = []
+def getProposalsForNFT(nftAddress: address, tokenId: uint256) -> (DynArray[address, 100], DynArray[uint256, 100]):
+    proposers: DynArray[address, 100] = self.proposalAddresses[nftAddress][tokenId]
+    prices: DynArray[uint256, 100] = []
     count: uint256 = self.proposalCount[nftAddress][tokenId]
 
     for i: uint256 in range(MAX_PROPOSALS):
